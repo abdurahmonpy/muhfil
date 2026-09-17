@@ -1,4 +1,4 @@
-﻿# Muhfil
+# Muhfil
 
 Muhfil — zamonaviy, tezkor va qulay blog platformasi (Medium kloni).
 
