@@ -1,0 +1,102 @@
+{% extends "base_auth.html" %}
+{% load static %}
+
+{% block title %}Sign in with Google{% endblock %}
+
+{% block content %}
+
+  <header class="w-full flex items-center justify-between max-w-5xl mx-auto">
+    <a href="{% url 'index' %}" class="flex items-center space-x-2.5">
+      <img src="{% static 'images/muhfil-emblem-black.png' %}" alt="Muhfil" class="h-8 w-8 object-contain dark:hidden shrink-0">
+      <img src="{% static 'images/muhfil-emblem-white.png' %}" alt="Muhfil" class="h-8 w-8 object-contain hidden dark:block shrink-0">
+      <span class="font-serif text-2xl font-bold tracking-tight text-black dark:text-white">Muhfil</span>
+    </a>
+  </header>
+
+  <main class="w-full max-w-[460px] mx-auto my-12 p-8 sm:p-10 rounded-2xl border border-gray-200 dark:border-[#2d2d2d] shadow-lg bg-white dark:bg-[#1e1e1e]">
+    <div class="flex flex-col items-center text-center mb-6">
+      <svg class="w-10 h-10 mb-3" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+      </svg>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Google orqali kirish</h1>
+      <p class="text-xs text-gray-500 mt-1">Muhfil platformasiga kirish uchun Google hisobingizni tanlang</p>
+    </div>
+
+    {% if error %}
+    <div class="p-3 mb-5 text-xs text-red-700 bg-red-50 dark:bg-red-950/40 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-900 flex items-center space-x-2">
+      <i class="bi bi-exclamation-circle text-base shrink-0"></i>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    {% if google_oauth_url %}
+    <div class="mb-6">
+      <a href="{{ google_oauth_url }}" class="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#252525] hover:bg-gray-50 dark:hover:bg-[#2e2e2e] transition shadow-sm font-semibold text-sm text-gray-800 dark:text-gray-100 group">
+        <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>Rasmiy Google orqali 1-bosishda kirish</span>
+        <i class="bi bi-box-arrow-up-right text-xs text-gray-400 group-hover:text-blue-500 ml-1"></i>
+      </a>
+    </div>
+    {% endif %}
+
+    <!-- Tezkor Gmail hisob tanlash -->
+    <div class="space-y-2.5 mb-6">
+      <form method="POST" action="{% url 'google_auth' %}">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="abdurakhmon@gmail.com">
+        <input type="hidden" name="name" value="Abdurakhmon">
+        <button type="submit" class="w-full flex items-center justify-between p-3 rounded-xl border border-gray-200 dark:border-[#333] hover:bg-gray-50 dark:hover:bg-[#252525] transition text-left group">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+              A
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">Abdurakhmon</p>
+              <p class="text-xs text-gray-500">abdurakhmon@gmail.com</p>
+            </div>
+          </div>
+          <i class="bi bi-arrow-right text-gray-400 group-hover:text-blue-600"></i>
+        </button>
+      </form>
+    </div>
+
+    <div class="relative flex items-center justify-center my-6">
+      <div class="border-t border-gray-200 dark:border-[#333] w-full"></div>
+      <span class="bg-white dark:bg-[#1e1e1e] px-3 text-xs text-gray-400">yoki boshqa Gmail</span>
+    </div>
+
+    <form method="POST" action="{% url 'google_auth' %}" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Gmail manzilingiz</label>
+        <div class="relative">
+          <i class="bi bi-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <input type="text" name="email" placeholder="siz@gmail.com" class="w-full pl-10 pr-3.5 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#252525] focus:outline-none focus:border-blue-500 dark:text-white" required>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Ismingiz (ixtiyoriy)</label>
+        <input type="text" name="name" placeholder="Ism Familiya" class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#252525] focus:outline-none focus:border-blue-500 dark:text-white">
+      </div>
+
+      <button type="submit" class="w-full rounded-full bg-[#1a73e8] hover:bg-[#1557b0] py-2.5 text-sm font-semibold text-white transition-colors shadow flex items-center justify-center space-x-2">
+        <span>Google orqali davom etish</span>
+        <i class="bi bi-arrow-right"></i>
+      </button>
+    </form>
+
+    <div class="mt-8 pt-4 border-t border-gray-100 dark:border-[#2c2c2c] text-center">
+      <a href="{% url 'login' %}" class="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white transition">&larr; Oddiy login sahifasiga qaytish</a>
+    </div>
+  </main>
+
+{% endblock content %}

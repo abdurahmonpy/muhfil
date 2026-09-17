@@ -1,0 +1,259 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="{% static 'js/theme.js' %}"></script>
+  <title>{% block title %}Muhfil{% endblock %} – Muhfil</title>
+  <link rel="icon" type="image/png" href="{% static 'images/muhfil-emblem-black.png' %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="{% static 'js/tailwind.config.js' %}"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=8">
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="{% block body_class %}bg-white text-medium-dark antialiased dark:bg-[#121212] dark:text-[#e6e6e6]{% endblock %}"
+      data-nav-page="{% block nav_page %}{% endblock %}"
+      {% block body_attrs %}{% endblock %}>
+
+  <!-- Global Cloud Animation Preloader / Loading Overlay -->
+  <div id="app-preloader" class="preloader-hidden">
+    {% include "loader.html" %}
+    <p class="preloader-text mt-3 font-sans text-xs tracking-wider uppercase font-semibold text-gray-500 dark:text-gray-400">Loading...</p>
+  </div>
+
+  {% block before_layout %}{% endblock %}
+
+  {% block layout %}
+  <div class="medium-app-layout">
+    <aside id="left-sidebar" class="fixed lg:sticky top-0 left-0 h-screen w-[240px] shrink-0 border-r border-gray-100 dark:border-[#242424] bg-white dark:bg-[#121212] flex flex-col justify-between p-5 z-40 transition-all duration-200 -translate-x-full lg:translate-x-0 overflow-y-auto overflow-x-hidden">
+      <div class="space-y-6">
+        <div class="sidebar-top-header flex items-center space-x-3 pt-1">
+          <button type="button" id="sidebar-toggle-btn" class="sidebar-toggle-btn p-1 -ml-1 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white shrink-0" title="Toggle Navigation">
+            <i class="bi bi-list text-2xl"></i>
+          </button>
+          <a href="{% url 'feed' %}" class="sidebar-brand-logo flex items-center space-x-2 group">
+            <img src="{% static 'images/muhfil-emblem-black.png' %}" alt="Muhfil" class="h-7 w-7 object-contain dark:hidden shrink-0 transition-transform group-hover:scale-105">
+            <img src="{% static 'images/muhfil-emblem-white.png' %}" alt="Muhfil" class="h-7 w-7 object-contain hidden dark:block shrink-0 transition-transform group-hover:scale-105">
+            <span class="nav-label font-serif font-bold text-2xl tracking-tight text-black dark:text-white">Muhfil</span>
+          </a>
+        </div>
+
+        <nav class="space-y-1">
+          <a href="{% url 'feed' %}" class="medium-nav-item" data-nav-link="home">
+            <i class="bi bi-house-door text-xl nav-icon-inactive"></i>
+            <i class="bi bi-house-door-fill text-xl nav-icon-active hidden"></i>
+            <span class="nav-label">Home</span>
+          </a>
+          <a href="{% url 'lists' %}" class="medium-nav-item" data-nav-link="library">
+            <i class="bi bi-bookmarks text-xl nav-icon-inactive"></i>
+            <i class="bi bi-bookmarks-fill text-xl nav-icon-active hidden"></i>
+            <span class="nav-label">Library</span>
+          </a>
+          <a href="{% url 'profile' %}" class="medium-nav-item" data-nav-link="profile">
+            <i class="bi bi-person text-xl nav-icon-inactive"></i>
+            <i class="bi bi-person-fill text-xl nav-icon-active hidden"></i>
+            <span class="nav-label">Profile</span>
+          </a>
+          <a href="{% url 'profile' %}#stories" class="medium-nav-item" data-nav-link="stories">
+            <i class="bi bi-journal-text text-xl"></i>
+            <span class="nav-label">Stories</span>
+          </a>
+          <a href="{% url 'stats' %}" class="medium-nav-item" data-nav-link="stats">
+            <i class="bi bi-bar-chart-line text-xl nav-icon-inactive"></i>
+            <i class="bi bi-bar-chart-line-fill text-xl nav-icon-active hidden"></i>
+            <span class="nav-label">Stats</span>
+          </a>
+        </nav>
+
+        <div class="border-t border-gray-100 dark:border-[#242424]"></div>
+
+        <div class="following-section space-y-4">
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Following</p>
+          <div class="space-y-3">
+            {% if request.user.is_authenticated %}
+            {% for followed_user in request.user.following.all|slice:":5" %}
+            <a href="{% url 'user_profile' username=followed_user.username %}" class="flex items-center space-x-3 text-sm text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white group">
+              {% if followed_user.profile.avatar %}
+              <img src="{{ followed_user.profile.avatar.url }}" class="w-6 h-6 rounded-full object-cover shrink-0" alt="{{ followed_user.username }}">
+              {% else %}
+              <div class="w-6 h-6 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-serif text-xs font-bold shrink-0">
+                {{ followed_user.username|first|upper }}
+              </div>
+              {% endif %}
+              <span class="font-medium group-hover:underline truncate">{{ followed_user.get_full_name|default:followed_user.username }}</span>
+            </a>
+            {% empty %}
+            <p class="text-xs text-gray-400 italic">Not following anyone yet.</p>
+            {% endfor %}
+            {% else %}
+            <p class="text-xs text-gray-400 italic">Sign in to see who you follow.</p>
+            {% endif %}
+          </div>
+          <div class="pt-2 flex items-start space-x-2 text-xs text-gray-500 dark:text-gray-400">
+            <i class="bi bi-plus-lg text-sm text-gray-500 mt-0.5 shrink-0"></i>
+            <p class="leading-relaxed">
+              Find writers and publications to follow.
+              <a href="{% url 'search' %}" class="text-medium-green hover:underline block mt-0.5 font-medium">See suggestions</a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-6 border-t border-gray-100 dark:border-[#242424] space-y-2">
+        <a href="{% url 'write' %}" class="medium-nav-item text-xs text-gray-500 hover:text-black dark:hover:text-white" data-nav-link="write">
+          <i class="bi bi-pencil-square text-base"></i>
+          <span class="nav-label">Write a story</span>
+        </a>
+        <a href="{% url 'settings' %}" class="medium-nav-item text-xs text-gray-500 hover:text-black dark:hover:text-white" data-nav-link="settings">
+          <i class="bi bi-gear text-base"></i>
+          <span class="nav-label">Settings</span>
+        </a>
+      </div>
+    </aside>
+
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black/40 z-30 hidden lg:hidden backdrop-blur-sm"></div>
+
+    <div class="flex-1 flex flex-col min-w-0">
+      <header class="sticky top-0 z-30 w-full border-b border-gray-100 dark:border-[#242424] bg-white/95 dark:bg-[#121212]/95 backdrop-blur px-4 sm:px-8 py-3">
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex items-center space-x-3 flex-1 max-w-md">
+            <button type="button" data-action="toggle-sidebar" class="lg:hidden p-1.5 -ml-1 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white" title="Open Menu">
+              <i class="bi bi-list text-2xl"></i>
+            </button>
+            <form action="{% url 'search' %}" method="GET" class="relative w-full max-w-xs sm:max-w-sm">
+              <i class="bi bi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+              <input type="text" name="q" placeholder="Search" class="medium-top-search text-sm placeholder-gray-400" />
+            </form>
+          </div>
+
+          <div class="flex items-center space-x-3 sm:space-x-5 text-sm shrink-0">
+            <a href="{% url 'write' %}" class="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors">
+              <i class="bi bi-pencil-square text-lg"></i>
+              <span class="hidden sm:inline-block font-normal">Write</span>
+            </a>
+
+            <!-- Dark mode toggle qismi vaqtinchalik commentga olindi
+            <button type="button" data-action="toggle-theme" class="p-1.5 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors" title="Toggle Theme">
+              <i class="bi bi-moon-fill theme-icon-moon text-base"></i>
+              <i class="bi bi-sun-fill theme-icon-sun text-base hidden text-yellow-400"></i>
+            </button>
+            -->
+
+            <div class="relative">
+              <button type="button" data-dropdown-toggle="notifications-dropdown" class="relative p-1 text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors" title="Notifications">
+                <i class="bi bi-bell text-lg"></i>
+                {% if unread_notifications_count %}<span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-medium-green"></span>{% endif %}
+              </button>
+              <div id="notifications-dropdown" class="dropdown-menu absolute right-0 mt-3 w-80 rounded-xl bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#333] shadow-xl py-2 hidden z-50">
+                <div class="px-4 py-2 border-b border-gray-100 dark:border-[#2a2a2a] flex items-center justify-between">
+                  <span class="font-bold text-sm">Notifications</span>
+                  <a href="{% url 'notifications' %}" class="text-xs text-medium-green hover:underline">View all</a>
+                </div>
+                <div class="max-h-72 overflow-y-auto divide-y divide-gray-100 dark:divide-[#2a2a2a]">
+                  {% for notif in recent_notifications %}
+                  <a href="{% url 'notifications' %}" class="flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#252525]">
+                    {% if notif.actor.profile.avatar %}
+                    <img src="{{ notif.actor.profile.avatar.url }}" class="w-8 h-8 rounded-full object-cover" alt="{{ notif.actor.username }}" loading="lazy">
+                    {% else %}
+                    <div class="w-8 h-8 rounded-full bg-medium-green text-white flex items-center justify-center font-bold text-sm shrink-0">{{ notif.actor.username|first|upper }}</div>
+                    {% endif %}
+                    <div class="text-xs space-y-1">
+                      <p><span class="font-bold">{{ notif.actor.get_full_name|default:notif.actor.username }}</span> {{ notif.verb }}</p>
+                      <span class="text-gray-400">{{ notif.created_at|timesince }} ago</span>
+                    </div>
+                  </a>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <div class="relative">
+              <button type="button" data-dropdown-toggle="user-dropdown" class="flex items-center focus:outline-none" title="Profile">
+                {% if request.user.is_authenticated and request.user.profile.avatar %}
+                <img src="{{ request.user.profile.avatar.url }}" class="w-8 h-8 rounded-full object-cover ring-2 ring-medium-green" alt="{{ request.user.username }}" loading="lazy">
+                {% else %}
+                <div class="w-8 h-8 rounded-full bg-medium-green text-white flex items-center justify-center font-bold text-sm ring-2 ring-red-500 shrink-0">
+                  {{ request.user.username|default:"A"|first|upper }}
+                </div>
+                {% endif %}
+              </button>
+              <div id="user-dropdown" class="dropdown-menu absolute right-0 mt-3 w-64 rounded-xl bg-white dark:bg-[#1e1e1e] border border-gray-200 dark:border-[#333] shadow-xl py-2 hidden z-50 text-sm">
+                <div class="px-4 py-3 border-b border-gray-100 dark:border-[#2a2a2a]">
+                  <p class="font-bold text-gray-900 dark:text-white">{{ request.user.get_full_name|default:request.user.username|default:"Guest" }}</p>
+                  <p class="text-xs text-gray-500">{% if request.user.username %}@{{ request.user.username }}{% else %}Not signed in{% endif %}</p>
+                </div>
+                <div class="py-1">
+                  <a href="{% url 'profile' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#252525]"><i class="bi bi-person text-base"></i><span>Profile</span></a>
+                  <a href="{% url 'lists' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#252525]"><i class="bi bi-bookmarks text-base"></i><span>Library</span></a>
+                  <a href="{% url 'stats' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#252525]"><i class="bi bi-bar-chart-line text-base"></i><span>Stats</span></a>
+                  <a href="{% url 'settings' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#252525]"><i class="bi bi-gear text-base"></i><span>Settings</span></a>
+                </div>
+                <div class="border-t border-gray-100 dark:border-[#2a2a2a] py-1">
+                  {% if request.user.is_authenticated %}
+                  <a href="{% url 'logout' %}" class="flex items-center space-x-3 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-[#252525]">
+                    <i class="bi bi-box-arrow-right text-base"></i><span>Sign out</span>
+                  </a>
+                  {% else %}
+                  <button type="button" data-auth-modal="signin" class="w-full flex items-center space-x-3 px-4 py-2 text-medium-green hover:bg-gray-50 dark:hover:bg-[#252525] text-left">
+                    <i class="bi bi-box-arrow-in-right text-base"></i><span>Sign in</span>
+                  </button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+  {% block responses_drawer %}
+  <div id="responses-backdrop" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] hidden transition-opacity"></div>
+  <aside id="responses-drawer" class="fixed top-0 right-0 h-screen max-h-screen w-full sm:w-[440px] bg-white dark:bg-[#191919] z-[60] shadow-2xl transition-transform duration-300 translate-x-full flex flex-col">
+    <div class="px-6 py-4 border-b border-gray-200 dark:border-[#2a2a2a] flex items-center justify-between shrink-0">
+      <h3 id="responses-count-header" class="font-sans font-bold text-lg text-gray-900 dark:text-white">Responses</h3>
+      <button type="button" id="close-responses-btn" class="p-1 text-gray-400 hover:text-black dark:hover:text-white text-xl"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+      <div class="rounded-xl border border-gray-200 dark:border-[#333] p-4 bg-white dark:bg-[#1e1e1e] shadow-sm">
+        <div class="flex items-center space-x-2.5 mb-3">
+          {% if request.user.profile.avatar %}
+          <img src="{{ request.user.profile.avatar.url }}" class="w-7 h-7 rounded-full object-cover" alt="{{ request.user.username }}">
+          {% else %}
+          <div class="w-7 h-7 rounded-full bg-medium-green text-white flex items-center justify-center font-bold text-xs shrink-0">{{ request.user.username|first|upper }}</div>
+          {% endif %}
+          <span class="text-xs font-semibold text-gray-800 dark:text-gray-200">{{ request.user.get_full_name|default:request.user.username }}</span>
+        </div>
+        <textarea id="response-input" rows="3" placeholder="What are your thoughts?" class="w-full text-sm bg-transparent border-0 focus:outline-none focus:ring-0 resize-none placeholder-gray-400 text-gray-900 dark:text-white"></textarea>
+        <div class="flex items-center justify-end space-x-2 pt-3 border-t border-gray-100 dark:border-[#2a2a2a]">
+          <button type="button" id="cancel-response-btn" class="text-xs text-gray-500 hover:text-black px-3 py-1.5">Cancel</button>
+          <button type="button" id="post-response-btn" disabled class="bg-medium-green text-white text-xs font-medium px-4 py-1.5 rounded-full opacity-50 cursor-not-allowed">Respond</button>
+        </div>
+      </div>
+      <div id="responses-list" class="space-y-6">
+        {% block responses_list %}{% endblock %}
+      </div>
+    </div>
+  </aside>
+  {% endblock responses_drawer %}
+  {% endblock layout %}
+
+  {% block auth_modal %}
+  {% include "auth_modal.html" %}
+  {% endblock auth_modal %}
+
+  <div id="toast-container" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 pointer-events-none"></div>
+
+  <script src="{% static 'js/main.js' %}?v=8"></script>
+  <script src="{% static 'js/pages.js' %}?v=5"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

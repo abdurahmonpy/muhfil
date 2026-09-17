@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Library{% endblock %}
+{% block nav_page %}library{% endblock %}
+
+{% block responses_drawer %}{% endblock %}
+
+{% block content %}
+
+      <main class="max-w-[760px] w-full mx-auto px-4 sm:px-8 py-10">
+
+        {% if active_list %}
+        <div class="mb-8">
+          <a href="{% url 'lists' %}" class="inline-flex items-center space-x-2 text-sm text-gray-500 hover:text-black dark:hover:text-white mb-6 transition-colors">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back to all lists</span>
+          </a>
+
+          <div class="p-6 sm:p-8 rounded-2xl bg-gray-50 dark:bg-[#181818] border border-gray-100 dark:border-[#262626] mb-8">
+            <div class="flex items-center space-x-2 text-xs text-gray-500 mb-2">
+              <span>Created by {{ active_list.user.get_display_name }}</span>
+              <span>·</span>
+              <span>{{ active_list.posts.count }} stor{{ active_list.posts.count|pluralize:"y,ies" }}</span>
+              {% if active_list.is_private %}
+              <span>·</span>
+              <span class="inline-flex items-center space-x-1"><i class="bi bi-lock-fill text-[10px]"></i><span>Private</span></span>
+              {% endif %}
+            </div>
+            <h1 class="font-sans font-bold text-3xl sm:text-4xl text-gray-900 dark:text-white tracking-tight mb-2">
+              {{ active_list.name }}
+            </h1>
+            {% if active_list.description %}
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ active_list.description }}</p>
+            {% endif %}
+          </div>
+
+          <div class="space-y-6">
+            {% for story in list_posts %}
+            <article data-clickable-card data-href="{{ story.get_absolute_url }}" class="medium-story-card border-b border-gray-100 dark:border-[#242424] pb-6 mb-6 cursor-pointer" data-post-id="{{ story.id }}">
+              <div class="flex items-start justify-between gap-6">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center space-x-2 text-xs text-gray-700 dark:text-gray-300 mb-2 font-normal">
+                    {% if story.author.profile.avatar %}
+                    <img src="{{ story.author.profile.avatar.url }}" class="w-5 h-5 rounded-full object-cover" alt="{{ story.author.username }}">
+                    {% else %}
+                    <span class="w-5 h-5 rounded bg-medium-green text-white flex items-center justify-center font-bold text-[9px]">{{ story.author.username|first|upper }}</span>
+                    {% endif %}
+                    <span class="font-medium text-gray-900 dark:text-gray-100">{{ story.author.get_display_name|default:story.author.username }}</span>
+                    <span>·</span>
+                    <span class="text-gray-500">{{ story.created|date:"M j, Y" }}</span>
+                  </div>
+
+                  <a href="{{ story.get_absolute_url }}" class="group block">
+                    <h2 class="medium-story-title group-hover:text-gray-600 dark:group-hover:text-gray-300 transition leading-snug">
+                      {{ story.title }}
+                    </h2>
+                    <p class="medium-story-subtitle mt-1 line-clamp-2">
+                      {{ story.subtitle|default:story.plain_text }}
+                    </p>
+                  </a>
+
+                  <div class="flex items-center justify-between pt-4 mt-2 text-xs text-gray-500">
+                    <div class="flex items-center space-x-4">
+                      <span>{{ story.read_time_minutes }} min read</span>
+                    </div>
+                    <button type="button" data-action="bookmark" data-post-id="{{ story.id }}" class="p-1 hover:text-black dark:hover:text-white" title="Bookmark story">
+                      <i class="bi bi-bookmark bookmark-outline text-base {% if story.id in bookmarked_ids %}hidden{% endif %}"></i>
+                      <i class="bi bi-bookmark-fill bookmark-filled text-base text-black dark:text-white {% if story.id not in bookmarked_ids %}hidden{% endif %}"></i>
+                    </button>
+                  </div>
+                </div>
+
+                {% if story.get_cover %}
+                <a href="{{ story.get_absolute_url }}" class="shrink-0 overflow-hidden rounded-md block">
+                  <img src="{{ story.get_cover }}" class="medium-story-thumb" alt="{{ story.title }}">
+                </a>
+                {% endif %}
+              </div>
+            </article>
+            {% empty %}
+            <div class="text-center py-16 text-gray-400 space-y-2">
+              <i class="bi bi-bookmarks text-3xl block text-gray-300 dark:text-gray-600"></i>
+              <p class="text-base font-medium text-gray-700 dark:text-gray-300">No stories in this list yet.</p>
+              <p class="text-xs">Save stories by clicking the bookmark icon on any article.</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+
+        <div class="flex items-center justify-between mb-8">
+          <h1 class="font-sans font-bold text-3xl sm:text-4xl text-gray-900 dark:text-white tracking-tight">
+            Your library
+          </h1>
+          <button type="button" data-modal-open="create-list-modal" class="rounded-full bg-medium-green hover:bg-medium-green-hover px-4 py-2 text-xs sm:text-sm font-medium text-white transition-colors shadow-sm">
+            New list
+          </button>
+        </div>
+
+        <div data-tabs-group="library-tabs" class="flex items-center space-x-6 sm:space-x-8 border-b border-gray-200 dark:border-[#242424] mb-8 text-xs sm:text-sm font-normal overflow-x-auto">
+          <button type="button" data-tab-target="tab-your-lists" class="pb-3 border-b-2 border-black dark:border-white font-medium text-black dark:text-white whitespace-nowrap">
+            Your lists ({{ user_lists|length }})
+          </button>
+          <button type="button" data-tab-target="tab-saved-stories" class="pb-3 border-b-2 border-transparent text-gray-500 hover:text-black dark:hover:text-white whitespace-nowrap">
+            Saved stories ({{ saved_posts|length }})
+          </button>
+          <button type="button" data-tab-target="tab-reading-history" class="pb-3 border-b-2 border-transparent text-gray-500 hover:text-black dark:hover:text-white whitespace-nowrap">
+            Reading history
+          </button>
+        </div>
+
+        <div id="tab-your-lists" data-tab-panel-group="library-tabs" class="space-y-6">
+
+          <div id="library-promo-banner" class="relative overflow-hidden rounded-2xl bg-[#1a8917] p-8 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm">
+            <button type="button" id="dismiss-library-promo" class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors" title="Dismiss">
+              <i class="bi bi-x-lg text-sm"></i>
+            </button>
+
+            <div class="space-y-4 max-w-sm z-10">
+              <h2 class="font-sans font-bold text-xl sm:text-2xl leading-snug tracking-tight">
+                Create a list to easily organize and share stories
+              </h2>
+              <button type="button" data-modal-open="create-list-modal" class="rounded-full bg-black text-white text-xs font-semibold px-4 py-2 hover:bg-black/85 transition-all inline-block shadow">
+                Start a list
+              </button>
+            </div>
+
+            <div class="relative w-40 h-36 flex items-center justify-center shrink-0 self-center md:self-auto select-none pointer-events-none">
+              <div class="absolute w-40 h-40 rounded-full bg-white/10 flex items-center justify-center">
+                <div class="w-28 h-28 rounded-full bg-white/10 flex items-center justify-center">
+                  <div class="w-14 h-14 rounded-full bg-white text-gray-800 flex items-center justify-center shadow-lg">
+                    <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M17 3H7a2 2 0 00-2 2v16l7-4 7 4V5a2 2 0 00-2-2z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m-2-2h4"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {% for sl in user_lists %}
+          <div class="p-6 sm:p-7 rounded-xl bg-[#f9f9f9] dark:bg-[#181818] border border-gray-100 dark:border-[#262626] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 hover:shadow-sm transition-all group">
+            <div class="space-y-2 flex-1 min-w-0">
+              <div class="flex items-center space-x-2">
+                {% if request.user.profile.avatar %}
+                <img src="{{ request.user.profile.avatar.url }}" class="w-5 h-5 rounded-full object-cover" alt="{{ request.user.username }}">
+                {% else %}
+                <span class="w-5 h-5 rounded bg-medium-green text-white flex items-center justify-center font-bold text-[9px]">{{ request.user.username|first|upper }}</span>
+                {% endif %}
+                <span class="text-xs font-semibold text-gray-900 dark:text-white">{{ request.user.get_display_name|default:request.user.username }}</span>
+              </div>
+
+              <h3 class="font-bold text-xl text-gray-900 dark:text-white group-hover:underline">
+                <a href="{% url 'lists' %}?list={{ sl.id }}">{{ sl.name }}</a>
+              </h3>
+
+              {% if sl.description %}
+              <p class="text-xs text-gray-500 line-clamp-1">{{ sl.description }}</p>
+              {% endif %}
+
+              <div class="flex items-center space-x-3 pt-1 text-xs text-gray-500">
+                <span>{{ sl.post_count }} stor{{ sl.post_count|pluralize:"y,ies" }}</span>
+                {% if sl.is_private %}
+                <i class="bi bi-lock-fill text-[11px] text-gray-400" title="Private list"></i>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="shrink-0 flex items-center bg-white dark:bg-[#202020] border border-gray-200 dark:border-[#2f2f2f] rounded-lg overflow-hidden h-20 w-36 sm:w-44 shadow-xs justify-center text-gray-400">
+              <i class="bi bi-bookmarks text-2xl"></i>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-10 text-gray-400 text-sm">
+            <p>You haven't created any custom lists yet.</p>
+          </div>
+          {% endfor %}
+
+        </div>
+
+        <div id="tab-saved-stories" data-tab-panel-group="library-tabs" class="space-y-6 hidden">
+          {% for story in saved_posts %}
+          <article data-clickable-card data-href="{{ story.get_absolute_url }}" class="medium-story-card border-b border-gray-100 dark:border-[#242424] pb-6 mb-6 cursor-pointer" data-post-id="{{ story.id }}">
+            <div class="flex items-start justify-between gap-6">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-2 text-xs text-gray-700 dark:text-gray-300 mb-2 font-normal">
+                  {% if story.author.profile.avatar %}
+                  <img src="{{ story.author.profile.avatar.url }}" class="w-4 h-4 rounded-full object-cover shrink-0" alt="{{ story.author.username }}">
+                  {% else %}
+                  <span class="w-4 h-4 rounded bg-medium-green text-white flex items-center justify-center font-bold text-[9px] shrink-0">{{ story.author.username|first|upper }}</span>
+                  {% endif %}
+                  <span class="truncate font-medium text-gray-900 dark:text-white">{{ story.author.get_display_name|default:story.author.username }}</span>
+                  <span class="text-gray-400">·</span>
+                  <span class="text-gray-500 shrink-0">{{ story.created|date:"M j, Y" }}</span>
+                </div>
+
+                <a href="{{ story.get_absolute_url }}" class="block group">
+                  <h3 class="font-bold text-lg sm:text-xl text-gray-900 dark:text-white tracking-tight leading-snug group-hover:text-gray-600 dark:group-hover:text-gray-300 transition">
+                    {{ story.title }}
+                  </h3>
+                  {% if story.subtitle %}
+                  <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                    {{ story.subtitle }}
+                  </p>
+                  {% endif %}
+                </a>
+
+                <div class="flex items-center justify-between pt-4 mt-1 text-xs text-gray-500">
+                  <div class="flex items-center space-x-4">
+                    <span>{{ story.read_time_minutes }} min read</span>
+                    <span>👏 {{ story.total_claps }}</span>
+                  </div>
+                  <button type="button" data-action="bookmark" data-post-id="{{ story.id }}" data-bookmarked="true" class="p-1 text-black dark:text-white hover:opacity-75 transition" title="Remove from bookmarks">
+                    <i class="bi bi-bookmark-fill bookmark-filled text-base"></i>
+                  </button>
+                </div>
+              </div>
+
+              {% if story.get_cover %}
+              <a href="{{ story.get_absolute_url }}" class="shrink-0 block overflow-hidden rounded-md group">
+                <img src="{{ story.get_cover }}" class="w-[100px] h-[70px] sm:w-[130px] sm:h-[85px] object-cover rounded group-hover:opacity-90 transition shadow-sm" alt="{{ story.title }}">
+              </a>
+              {% endif %}
+            </div>
+          </article>
+          {% empty %}
+          <div class="text-center py-12 text-gray-500 dark:text-gray-400 space-y-3">
+            <i class="bi bi-bookmark text-4xl text-gray-300 dark:text-gray-600 block"></i>
+            <p class="text-sm font-medium">No saved stories yet.</p>
+            <p class="text-xs text-gray-400">Click the bookmark icon on any story to save it to your reading list.</p>
+            <a href="{% url 'feed' %}" class="inline-block mt-2 text-xs font-semibold text-medium-green hover:underline">Explore stories</a>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div id="tab-reading-history" data-tab-panel-group="library-tabs" class="space-y-6 hidden">
+          <div class="flex items-center justify-between border-b border-gray-100 dark:border-[#252525] pb-4">
+            <span class="text-xs text-gray-500">Stories you have recently read on Muhfil.</span>
+            <button type="button" id="clear-history-btn" class="text-xs text-red-500 hover:underline">
+              Clear history
+            </button>
+          </div>
+          <div id="history-list" class="space-y-3">
+            {% for story in saved_posts|slice:":5" %}
+            <div class="text-xs text-gray-600 dark:text-gray-300 flex items-center justify-between py-2 border-b border-gray-50 dark:border-[#202020]">
+              <a href="{{ story.get_absolute_url }}" class="font-semibold hover:underline">{{ story.title }}</a>
+              <span class="text-gray-400">Read recently</span>
+            </div>
+            {% empty %}
+            <p class="text-xs text-gray-400 italic py-4">No reading history yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        {% endif %}
+
+      </main>
+
+  <div id="create-list-modal" class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm hidden">
+    <div class="relative w-full max-w-md rounded-2xl bg-white dark:bg-[#1a1a1a] p-6 shadow-2xl border border-gray-200 dark:border-[#333]">
+      <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-[#282828]">
+        <h3 class="font-bold text-lg text-gray-900 dark:text-white">Create new list</h3>
+        <button type="button" data-modal-close class="text-gray-400 hover:text-black dark:hover:text-white">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <form id="create-list-form" method="POST" action="{% url 'create_list_api' %}" class="space-y-4 pt-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">List Name</label>
+          <input type="text" name="name" placeholder="Give it a name" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#222] focus:outline-none focus:border-medium-green dark:text-white" required>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Description (optional)</label>
+          <textarea name="description" rows="2" placeholder="Description" class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#222] focus:outline-none focus:border-medium-green dark:text-white"></textarea>
+        </div>
+
+        <div class="flex items-center space-x-2 pt-2">
+          <input type="checkbox" name="is_private" id="private-list-check" value="true" checked class="rounded text-medium-green focus:ring-0">
+          <label for="private-list-check" class="text-xs text-gray-600 dark:text-gray-400">Make it private</label>
+        </div>
+
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-100 dark:border-[#282828]">
+          <button type="button" data-modal-close class="rounded-full border border-gray-300 dark:border-gray-600 px-4 py-1.5 text-xs font-medium hover:border-black dark:hover:border-white">
+            Cancel
+          </button>
+          <button type="submit" class="rounded-full bg-medium-green px-5 py-1.5 text-xs font-semibold text-white hover:bg-medium-green-hover">
+            Create
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+{% endblock content %}

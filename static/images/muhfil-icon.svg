@@ -1,0 +1,16 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Outer circle border -->
+  <circle cx="24" cy="24" r="21" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+  
+  <!-- Left arch of M -->
+  <path d="M14 34V14l9 12-4 6z" fill="currentColor" opacity="0.85"/>
+  
+  <!-- Right arch of M -->
+  <path d="M34 34V14l-9 12 4 6z" fill="currentColor" opacity="0.85"/>
+  
+  <!-- Center crest (Muhfil gathering point) -->
+  <path d="M24 23.5L16 14h16L24 23.5z" fill="currentColor"/>
+  
+  <!-- Central focus circle -->
+  <circle cx="24" cy="29" r="2.5" fill="currentColor"/>
+</svg>

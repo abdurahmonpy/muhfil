@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}New story{% endblock %}
+{% block nav_page %}write{% endblock %}
+
+{% block responses_drawer %}{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/editor.js' %}?v=9"></script>
+{% endblock %}
+
+{% block layout %}
+<div class="min-h-screen bg-white dark:bg-[#121212] flex flex-col transition-colors duration-150">
+
+  <!-- Top Header -->
+  <header class="fixed top-0 left-0 right-0 z-40 bg-white dark:bg-[#121212] border-b border-gray-100 dark:border-[#242424] flex items-center justify-between px-6 h-14 transition-colors">
+    <!-- Left: Logo + Draft -->
+    <div class="flex items-center gap-3">
+      <a href="/" class="font-serif font-bold text-xl text-black dark:text-white tracking-tight">Muhfil</a>
+      <span class="text-sm text-gray-400 dark:text-gray-500 font-normal">Draft</span>
+    </div>
+
+    <!-- Right: Publish + actions -->
+    <div class="flex items-center gap-3">
+      <button type="button" id="open-publish-modal-btn"
+        class="px-4 py-1.5 rounded-full bg-[#1a8917] hover:bg-[#0f730c] text-white text-sm font-medium transition-colors">
+        Publish
+      </button>
+      <button type="button" data-action="write-notifications" class="p-2 text-gray-400 hover:text-black dark:text-gray-400 dark:hover:text-white transition" title="Notifications">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+        </svg>
+      </button>
+      <a href="{% url 'profile' %}" class="w-8 h-8 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs font-bold flex items-center justify-center transition hover:opacity-85 shadow-sm" title="Your profile">
+        A
+      </a>
+    </div>
+  </header>
+
+  <!-- Editor Area -->
+  <main class="flex-1 max-w-[740px] w-full mx-auto px-6 pt-24 pb-40">
+
+    <!-- Title -->
+    <div class="mb-2">
+      <textarea
+        id="editor-title"
+        rows="1"
+        placeholder="Title"
+        class="w-full resize-none font-serif text-4xl md:text-5xl font-bold placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none bg-transparent leading-tight text-gray-900 dark:text-white"
+      >{{ edit_post.title|default:"" }}</textarea>
+    </div>
+
+    <!-- Plus + Body Container -->
+    <div class="relative mt-6">
+      <!-- Floating Action Inserter Button & Menu (Dynamically tracks active line) -->
+      <div id="plus-floating-wrapper" class="absolute -left-11 sm:-left-13 transition-all duration-150 ease-out z-30 flex items-center" style="top: 0; opacity: 1;">
+        <button
+          type="button"
+          id="editor-plus-btn"
+          class="w-8 h-8 rounded-full border border-gray-400 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white flex items-center justify-center transition-all duration-200 bg-white dark:bg-[#1e1e1e] shadow-2xs"
+          title="Add image, video, embed, code or divider"
+        >
+          <span id="plus-icon-cross" class="text-xl leading-none font-light transition-transform duration-200">+</span>
+        </button>
+
+        <!-- 6 Green Circular Action Buttons matching Medium -->
+        <div id="editor-plus-menu" class="hidden absolute left-10 top-0 flex items-center gap-2.5 z-30 bg-white/95 dark:bg-[#1e1e1e]/95 py-0.5 px-1 rounded-full shadow-sm">
+          <!-- 1. Add an image -->
+          <button type="button" id="insert-image-btn" class="plus-item w-8 h-8 rounded-full border border-[#1a8917] text-[#1a8917] hover:bg-green-50 flex items-center justify-center transition-transform hover:scale-110 shadow-2xs" title="Add an image">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <path d="m21 15-5-5L5 21"/>
+            </svg>
+          </button>
+
+          <!-- 2. Search Unsplash -->
+          <button type="button" id="insert-unsplash-btn" class="plus-item w-8 h-8 rounded-full border border-[#1a8917] text-[#1a8917] hover:bg-green-50 flex items-center justify-center transition-transform hover:scale-110 shadow-2xs" title="Search Unsplash">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M7.5 6.75V0h9v6.75h-9zm9 3.75H24V24H0V10.5h7.5v6.75h9V10.5z"/>
+            </svg>
+          </button>
+
+          <!-- 3. Add a video -->
+          <button type="button" id="insert-video-btn" class="plus-item w-8 h-8 rounded-full border border-[#1a8917] text-[#1a8917] hover:bg-green-50 flex items-center justify-center transition-transform hover:scale-110 shadow-2xs" title="Add a video">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="3"/>
+              <polygon points="10 9 15 12 10 15 10 9" fill="currentColor"/>
+            </svg>
+          </button>
+
+          <!-- 4. Add an embed -->
+          <button type="button" id="insert-embed-btn" class="plus-item w-8 h-8 rounded-full border border-[#1a8917] text-[#1a8917] hover:bg-green-50 flex items-center justify-center transition-transform hover:scale-110 shadow-2xs" title="Add an embed">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+          </button>
+
+          <!-- 5. Add a new code block -->
+          <button type="button" id="insert-code-btn" class="plus-item w-8 h-8 rounded-full border border-[#1a8917] text-[#1a8917] hover:bg-green-50 flex items-center justify-center transition-transform hover:scale-110 shadow-2xs" title="Add a code block">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 4c-1.5 0-2 .5-2 2v3c0 1.5-.5 2-2 2 1.5 0 2 .5 2 2v3c0 1.5.5 2 2 2"/>
+              <path d="M17 4c1.5 0 2 .5 2 2v3c0 1.5.5 2 2 2-1.5 0-2 .5-2 2v3c0 1.5-.5 2-2 2"/>
+            </svg>
+          </button>
+
+          <!-- 6. Add a divider -->
+          <button type="button" id="insert-divider-btn" class="plus-item w-8 h-8 rounded-full border border-[#1a8917] text-[#1a8917] hover:bg-green-50 flex items-center justify-center transition-transform hover:scale-110 shadow-2xs" title="Add a divider">
+            <span class="font-bold text-sm tracking-widest leading-none mb-1">---</span>
+          </button>
+        </div>
+      </div>
+
+      <input type="file" id="editor-image-upload" accept="image/*" class="hidden">
+
+      <div
+        id="editor-body"
+        contenteditable="true"
+        class="medium-story-body w-full min-h-[450px] focus:outline-none text-gray-800 dark:text-gray-100 leading-relaxed font-serif text-xl"
+        data-placeholder="Tell your story..."
+        {% if edit_post %}data-post-id="{{ edit_post.id }}"{% endif %}
+        style="word-wrap:break-word;overflow-wrap:break-word;word-break:break-word;white-space:pre-wrap;min-width:0;"
+      >{% if edit_post %}{{ edit_post.text|safe }}{% endif %}</div>
+    </div>
+
+  </main>
+
+  <!-- Selection Toolbar -->
+  <div id="selection-toolbar" class="hidden absolute z-50 bg-[#1a1a1a] text-white rounded-lg shadow-xl px-2 py-1 flex items-center space-x-1">
+    <button type="button" data-format="bold" class="p-1.5 hover:text-[#1a8917]" title="Bold"><i class="bi bi-type-bold"></i></button>
+    <button type="button" data-format="italic" class="p-1.5 hover:text-[#1a8917]" title="Italic"><i class="bi bi-type-italic"></i></button>
+    <button type="button" data-format="createLink" class="p-1.5 hover:text-[#1a8917]" title="Link"><i class="bi bi-link-45deg text-lg"></i></button>
+    <span class="w-[1px] h-4 bg-gray-600 mx-1"></span>
+    <button type="button" data-format="h2" class="p-1.5 font-bold text-base hover:text-[#1a8917]" title="Large Heading">T</button>
+    <button type="button" data-format="h3" class="p-1.5 text-sm hover:text-[#1a8917]" title="Small Heading">T</button>
+    <button type="button" data-format="blockquote" class="p-1.5 hover:text-[#1a8917]" title="Quote"><i class="bi bi-quote text-base"></i></button>
+    <button type="button" data-format="code" class="p-1.5 hover:text-[#1a8917]" title="Code"><i class="bi bi-code"></i></button>
+  </div>
+
+  <!-- Full-Page Publish Submission Overlay -->
+  <div id="publish-modal" class="fixed inset-0 z-50 bg-white overflow-y-auto hidden">
+    <!-- Top Right Close Button -->
+    <button type="button" id="close-publish-modal-btn" class="fixed top-6 right-8 text-gray-400 hover:text-black transition p-2 z-50" title="Close">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+
+    <div class="max-w-[1040px] mx-auto px-6 sm:px-12 py-16 sm:py-20">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
+
+        <!-- Left Column: Story Preview -->
+        <div>
+          <h2 class="text-base font-bold text-gray-900 mb-6 font-sans">Story preview</h2>
+
+          <!-- Preview image placeholder -->
+          <div class="w-full aspect-[16/10] bg-[#f9f9f9] border border-gray-100 flex items-center justify-center p-8 text-center text-gray-400 text-xs sm:text-sm font-sans mb-4 rounded-sm">
+            Include a high-quality image in your story to make it more inviting to readers.
+          </div>
+
+          <div id="publish-read-time" class="text-xs text-gray-500 font-sans mb-3">1 min read</div>
+
+          <!-- Title Preview -->
+          <div class="mb-3">
+            <textarea
+              id="publish-preview-title"
+              rows="2"
+              maxlength="100"
+              class="w-full font-serif font-bold text-base sm:text-lg text-gray-900 border-b border-gray-200 focus:border-black focus:outline-none resize-none pb-1 leading-snug bg-transparent"
+              placeholder="Title"
+            ></textarea>
+            <div class="flex justify-end text-[11px] text-gray-400 mt-1" id="publish-title-counter">0/100</div>
+          </div>
+
+          <!-- Subtitle Preview -->
+          <div class="mb-4">
+            <textarea
+              id="publish-preview-subtitle"
+              rows="2"
+              maxlength="140"
+              class="w-full font-sans text-sm text-gray-700 border-b border-gray-200 focus:border-black focus:outline-none resize-none pb-1 leading-relaxed bg-transparent"
+              placeholder="Write a preview subtitle..."
+            ></textarea>
+            <div class="flex justify-end text-[11px] text-gray-400 mt-1" id="publish-subtitle-counter">0/140</div>
+          </div>
+
+          <p class="text-[12px] text-gray-500 leading-relaxed font-sans mb-8">
+            <span class="font-medium text-gray-700">Note:</span> Changes here will affect how your story appears in public places like Medium's homepage and in subscribers' inboxes — not the contents of the story itself.
+          </p>
+
+          <!-- Story footer section -->
+          <div class="pt-6 border-t border-gray-100">
+            <h3 class="text-sm font-bold text-gray-900 font-sans mb-1">Story footer</h3>
+            <p class="text-xs text-gray-500 font-sans mb-3">You are using the default footer.</p>
+            <div class="flex items-center gap-2 text-xs text-gray-600 font-sans">
+              <span class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded text-[10px] font-semibold text-gray-700 uppercase">Beta</span>
+              <a href="#" data-action="customize-footer" class="underline hover:text-black flex items-center gap-1">
+                Customize the footer displayed at the end of your stories.
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Publishing Controls -->
+        <div class="pt-1">
+          <!-- Topics -->
+          <div class="mb-8">
+            <h3 class="text-base font-bold text-gray-900 font-sans mb-1">Topics</h3>
+            <p class="text-xs text-gray-500 font-sans mb-4">Add up to five topics to help readers find your story.</p>
+
+            <div class="bg-[#fafafa] border border-gray-200 rounded p-3 focus-within:border-black transition-colors">
+              <div id="publish-tags-container" class="flex flex-wrap gap-1.5 mb-2"></div>
+              <input
+                type="text"
+                id="publish-tag-input"
+                placeholder="Add a topic..."
+                class="w-full bg-transparent text-sm text-gray-900 placeholder-gray-400 focus:outline-none font-sans"
+              />
+            </div>
+          </div>
+
+          <!-- Publication -->
+          <div class="mb-8">
+            <h3 class="text-base font-bold text-gray-900 font-sans mb-1">Publication</h3>
+            <p class="text-xs text-gray-500 font-sans">
+              <a href="#" data-action="submit-publication" class="underline hover:text-black font-medium">Submit</a> your story to connect with community.
+            </p>
+          </div>
+
+          <!-- Learn More Link -->
+          <p class="text-xs text-gray-500 font-sans mb-8">
+            <a href="#" data-coming-soon="Medium Publishing Guidelines & Distribution Info" class="underline hover:text-black">Learn more</a> about what happens to your post when you publish.
+          </p>
+
+          <!-- Buttons -->
+          <div class="flex items-center gap-5">
+            <button
+              type="button"
+              id="publish-now-btn"
+              class="px-5 py-2 rounded-full bg-[#191919] hover:bg-black text-white text-sm font-medium font-sans transition-colors shadow-sm"
+            >
+              Publish
+            </button>
+            <button
+              type="button"
+              id="schedule-later-btn"
+              class="text-xs text-gray-600 hover:text-black underline font-sans transition-colors"
+            >
+              Schedule for later
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .help-section {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #ffffff;
+      padding: 20px 24px 24px;
+      text-align: center;
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      z-index: 40;
+      border-top: 1px solid #f0f0f0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.04);
+    }
+    .help-inner {
+      position: relative;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 0 36px;
+    }
+    .help-close {
+      position: absolute;
+      top: -8px;
+      right: 4px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #999;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+      transition: color 0.15s ease;
+    }
+    .help-close:hover { color: #111; }
+    .help-arrow {
+      position: absolute;
+      top: 52%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      font-size: 32px;
+      color: #aaa;
+      cursor: pointer;
+      padding: 6px;
+      line-height: 1;
+      user-select: none;
+      transition: color 0.15s ease;
+      z-index: 2;
+    }
+    .help-arrow:hover { color: #111; }
+    .help-arrow.prev { left: -4px; }
+    .help-arrow.next { right: -4px; }
+    .help-arrow.hidden { visibility: hidden; }
+    .help-slide { display: none; width: 100%; margin: 0 auto; }
+    .help-slide.active { display: block; animation: helpSlideIn .35s ease both; }
+    .help-slide.active.backward { animation-name: helpSlideInBack; }
+    @keyframes helpSlideIn {
+      from { opacity: 0; transform: translateX(40px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes helpSlideInBack {
+      from { opacity: 0; transform: translateX(-40px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .help-slide p { color: #555; font-size: 14px; margin-bottom: 12px; line-height: 1.4; }
+    .help-slide img {
+      display: block;
+      max-width: 100%;
+      max-height: 220px;
+      width: auto;
+      height: auto;
+      margin: 0 auto;
+      border-radius: 6px;
+      background: #fff;
+    }
+    .help-dots { margin-top: 14px; display: flex; justify-content: center; gap: 6px; }
+    .help-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #d5d5d5; cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .help-dot.active { background: #757575; }
+  </style>
+
+  <div class="help-section" id="helpSection">
+    <div class="help-inner">
+      <button class="help-close" id="helpCloseBtn" onclick="dismissHelpSection()">&times;</button>
+      <button class="help-arrow prev" id="helpPrev">&lsaquo;</button>
+      <button class="help-arrow next" id="helpNext">&rsaquo;</button>
+
+      <div class="help-slide active">
+        <p>Select text to change formatting, add headers, or create links.</p>
+        <img src="https://cdn-images-1.medium.com/v2/1*eqlvF_kPTaDVcWZV4oPjVA.gif" alt="Select text animation">
+      </div>
+
+      <div class="help-slide">
+        <p>Add images, videos and other media by starting a new line and clicking &oplus;.</p>
+        <img src="https://cdn-images-1.medium.com/proxy/1*LhrJcTFODoqjnPPuHNEInA.gif" alt="Add media animation">
+      </div>
+
+      <div class="help-slide">
+        <p>Include content from Medium or other sites by pasting a link and pressing Enter.</p>
+        <img src="https://cdn-images-1.medium.com/proxy/1*2g5jIXYtWjsRFa9D-hBhMQ.gif" alt="Paste link animation">
+      </div>
+
+      <div class="help-slide">
+        <p>Mention people with @ and they'll be notified.</p>
+        <img src="https://cdn-images-1.medium.com/proxy/1*H9pEv0eHAvkGUVqdrHxH5g.gif" alt="Mention animation">
+      </div>
+
+      <div class="help-dots" id="helpDots"></div>
+    </div>
+  </div>
+
+  <script>
+    function dismissHelpSection() {
+      try {
+        localStorage.setItem('medium_write_help_closed', 'true');
+      } catch (e) {}
+      var el = document.getElementById('helpSection');
+      if (el) el.remove();
+    }
+
+    if (localStorage.getItem('medium_write_help_closed') === 'true') {
+      var initialEl = document.getElementById('helpSection');
+      if (initialEl) initialEl.remove();
+    }
+  </script>
+
+  <script>
+    (function () {
+      var slides = document.querySelectorAll('.help-slide');
+      var dotsBox = document.getElementById('helpDots');
+      var prevBtn = document.getElementById('helpPrev');
+      var nextBtn = document.getElementById('helpNext');
+      var current = 0;
+      var lastDir = 1;
+
+      slides.forEach(function (_, i) {
+        var d = document.createElement('span');
+        d.className = 'help-dot' + (i === 0 ? ' active' : '');
+        d.onclick = function () { show(i); };
+        dotsBox.appendChild(d);
+      });
+      var dots = dotsBox.querySelectorAll('.help-dot');
+
+      function show(i, dir) {
+        slides[current].classList.remove('active', 'backward');
+        dots[current].classList.remove('active');
+        lastDir = dir || lastDir;
+        current = (i + slides.length) % slides.length;
+        var s = slides[current];
+        s.classList.remove('backward');
+        if (lastDir < 0) s.classList.add('backward');
+        s.classList.remove('active');
+        void s.offsetWidth;
+        s.classList.add('active');
+        dots[current].classList.add('active');
+        prevBtn.classList.toggle('hidden', current === 0);
+        nextBtn.classList.toggle('hidden', current === slides.length - 1);
+      }
+
+      prevBtn.onclick = function () { show(current - 1, -1); };
+      nextBtn.onclick = function () { show(current + 1, 1); };
+      show(0);
+    })();
+  </script>
+
+  </div>
+{% endblock layout %}

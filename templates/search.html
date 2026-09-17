@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if query %}Search: {{ query }}{% elif topic_filter %}Topic: {{ topic_filter }}{% else %}Explore{% endif %}{% endblock %}
+{% block nav_page %}search{% endblock %}
+
+{% block responses_drawer %}{% endblock %}
+
+{% block content %}
+
+      <div class="max-w-[1240px] w-full mx-auto px-4 sm:px-8 py-8 flex justify-center gap-12 lg:gap-16">
+
+        <main class="flex-1 max-w-[680px] min-w-0">
+          
+          <div class="mb-6">
+            <h1 id="search-heading" class="font-sans font-bold text-3xl sm:text-4xl text-gray-900 dark:text-white">
+              {% if query %}Results for "{{ query }}"{% elif topic_filter %}Topic: #{{ topic_filter }}{% else %}Explore stories & topics{% endif %}
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">Discover ideas, deep engineering insights, and tech analyses.</p>
+          </div>
+
+          <div data-tabs-group="search-tabs" class="flex items-center space-x-8 border-b border-gray-200 dark:border-[#242424] mb-8 text-sm font-medium">
+            <button type="button" data-tab-target="search-tab-stories" class="pb-3 border-b-2 border-black dark:border-white font-bold text-black dark:text-white">
+              Stories ({{ posts|length }})
+            </button>
+            <button type="button" data-tab-target="search-tab-people" class="pb-3 border-b-2 border-transparent text-gray-500 hover:text-black dark:hover:text-white">
+              People ({{ people|length }})
+            </button>
+            <button type="button" data-tab-target="search-tab-topics" class="pb-3 border-b-2 border-transparent text-gray-500 hover:text-black dark:hover:text-white">
+              Topics ({{ topics|length }})
+            </button>
+          </div>
+
+          <div id="search-tab-stories" data-tab-panel-group="search-tabs" class="space-y-4">
+            {% for story in posts %}
+            <article class="search-item medium-story-card" data-post-id="{{ story.id }}">
+              <div class="flex items-start justify-between gap-6">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400 mb-2">
+                    {% if story.author.profile.avatar %}
+                    <img src="{{ story.author.profile.avatar.url }}" class="w-5 h-5 rounded-full object-cover" alt="{{ story.author.username }}">
+                    {% else %}
+                    <span class="w-5 h-5 rounded bg-medium-green text-white flex items-center justify-center font-bold text-[9px]">{{ story.author.username|first|upper }}</span>
+                    {% endif %}
+                    <span class="font-semibold text-gray-900 dark:text-gray-200">{{ story.author.get_display_name|default:story.author.username }}</span>
+                    <span>·</span>
+                    <span class="text-gray-500">{{ story.created|date:"M j" }}</span>
+                  </div>
+                  <a href="{{ story.get_absolute_url }}" class="group block">
+                    <h2 class="search-title medium-story-title group-hover:text-gray-600 dark:group-hover:text-gray-300 leading-snug">
+                      {{ story.title }}
+                    </h2>
+                    {% if story.subtitle %}
+                    <p class="search-snippet medium-story-subtitle mt-1.5 line-clamp-2">
+                      {{ story.subtitle }}
+                    </p>
+                    {% endif %}
+                  </a>
+                  <div class="flex items-center justify-between pt-4 mt-2 text-xs text-gray-500">
+                    <div class="flex items-center space-x-4">
+                      {% if story.tags.first %}
+                      <a href="{% url 'search' %}?topic={{ story.tags.first.name }}" class="medium-topic-pill">{{ story.tags.first.name }}</a>
+                      {% endif %}
+                      <span>{{ story.read_time_minutes }} min read</span>
+                    </div>
+                    <button type="button" data-action="bookmark" data-post-id="{{ story.id }}" class="p-1 hover:text-black dark:hover:text-white">
+                      <i class="bi bi-bookmark bookmark-outline text-base"></i>
+                      <i class="bi bi-bookmark-fill bookmark-filled text-base hidden"></i>
+                    </button>
+                  </div>
+                </div>
+                <a href="{{ story.get_absolute_url }}" class="shrink-0 overflow-hidden rounded-md block">
+                  <img src="{{ story.get_cover }}" class="medium-story-thumb" alt="{{ story.title }}">
+                </a>
+              </div>
+            </article>
+            {% empty %}
+            <div id="no-search-results" class="py-12 text-center text-gray-500">
+              <i class="bi bi-search text-3xl mb-2 block text-gray-400"></i>
+              <p class="text-base font-semibold text-gray-700 dark:text-gray-300">No stories found</p>
+              <p class="text-xs mt-1 text-gray-400">Try searching for different keywords or explore trending topics.</p>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div id="search-tab-people" data-tab-panel-group="search-tabs" class="space-y-4 hidden">
+            {% for person in people %}
+            <div class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-[#242424]">
+              <div class="flex items-center space-x-4">
+                {% if person.profile.avatar %}
+                <img src="{{ person.profile.avatar.url }}" class="w-12 h-12 rounded-full object-cover" alt="{{ person.username }}">
+                {% else %}
+                <div class="w-12 h-12 rounded-full bg-medium-green text-white flex items-center justify-center font-bold text-base">
+                  {{ person.username|first|upper }}
+                </div>
+                {% endif %}
+                <div>
+                  <a href="{% url 'profile_user' person.username %}" class="font-bold text-sm text-gray-900 dark:text-white hover:underline">{{ person.get_display_name|default:person.username }}</a>
+                  <p class="text-xs text-gray-500">{{ person.bio|default:"Writer on Medium"|truncatechars:60 }} · {{ person.follower_count }} Followers</p>
+                </div>
+              </div>
+              {% if request.user.is_authenticated and request.user != person %}
+              <button type="button" data-action="toggle-follow" data-user-id="{{ person.id }}" data-author="{{ person.username }}" class="medium-follow-btn">
+                Follow
+              </button>
+              {% endif %}
+            </div>
+            {% empty %}
+            <div class="py-12 text-center text-gray-500">
+              <i class="bi bi-people text-3xl mb-2 block text-gray-400"></i>
+              <p class="text-base font-semibold text-gray-700 dark:text-gray-300">No people found</p>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div id="search-tab-topics" data-tab-panel-group="search-tabs" class="grid grid-cols-1 sm:grid-cols-2 gap-4 hidden">
+            {% for topic in topics %}
+            <div class="p-5 rounded-xl border border-gray-100 dark:border-[#242424] flex items-center justify-between">
+              <div>
+                <a href="{% url 'search' %}?topic={{ topic.name }}" class="font-bold text-base text-gray-900 dark:text-white hover:underline">{{ topic.name }}</a>
+                <p class="text-xs text-gray-500">{{ topic.posts.count }} Stories</p>
+              </div>
+              <a href="{% url 'search' %}?topic={{ topic.name }}" class="medium-follow-btn text-center">
+                Explore
+              </a>
+            </div>
+            {% empty %}
+            <div class="py-12 col-span-2 text-center text-gray-500">
+              <i class="bi bi-tag text-3xl mb-2 block text-gray-400"></i>
+              <p class="text-base font-semibold text-gray-700 dark:text-gray-300">No topics found</p>
+            </div>
+            {% endfor %}
+          </div>
+
+        </main>
+      </div>
+
+{% endblock content %}

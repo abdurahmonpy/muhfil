@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}About Muhfil – Human stories and ideas{% endblock %}
+
+{% block body_class %}bg-[#191919] text-white antialiased min-h-screen flex flex-col relative overflow-x-hidden selection:bg-white selection:text-black{% endblock %}
+
+{% block layout %}
+
+  <div class="fixed inset-0 pointer-events-none select-none z-0">
+    <div class="absolute top-[22%] left-[45%] w-1 h-1 rounded-full bg-white/80 shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
+    <div class="absolute top-[32%] left-[68%] w-1.5 h-1.5 rounded-full bg-white/90 shadow-[0_0_10px_rgba(255,255,255,0.9)]"></div>
+    <div class="absolute top-[23%] left-[79%] w-1 h-1 rounded-full bg-white/70"></div>
+    <div class="absolute top-[65%] left-[67%] w-1 h-1 rounded-full bg-white/80"></div>
+    <div class="absolute top-[82%] left-[43%] w-1 h-1 rounded-full bg-white/75"></div>
+    <div class="absolute top-[48%] left-[47%] w-1 h-1 rounded-full bg-white/80"></div>
+    <div class="absolute top-[78%] left-[80%] w-1.5 h-1.5 rounded-full bg-white/90 shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
+    <div class="absolute top-[77%] left-[60%] w-1 h-1 rounded-full bg-white/70"></div>
+    <div class="absolute top-[40%] left-[88%] w-1 h-1 rounded-full bg-white/60"></div>
+    <div class="absolute top-[60%] left-[30%] w-1 h-1 rounded-full bg-white/70"></div>
+    <div class="absolute top-[15%] left-[60%] w-1 h-1 rounded-full bg-white/60"></div>
+  </div>
+
+  <header class="w-full border-b border-white/10 bg-[#191919]/90 sticky top-0 z-50 backdrop-blur">
+    <div class="max-w-[1280px] mx-auto px-6 sm:px-12 lg:px-20 h-[65px] sm:h-[70px] flex items-center justify-between">
+      <a href="{% url 'index' %}" class="flex items-center space-x-2.5 group">
+        <img src="{% static 'images/muhfil-emblem-white.png' %}" alt="Muhfil" class="h-8 w-8 object-contain shrink-0 transition-transform group-hover:scale-105">
+        <span class="font-serif font-bold text-3xl sm:text-[34px] tracking-[-0.04em] text-white">Muhfil</span>
+      </a>
+
+      <nav class="flex items-center space-x-3 sm:space-x-4 text-sm">
+        <button type="button" data-auth-modal="signin" class="border border-white/80 hover:border-white text-white font-normal px-4 sm:px-5 py-1.5 sm:py-2 rounded-full transition text-xs sm:text-sm">
+          Sign in
+        </button>
+        <button type="button" data-auth-modal="signup" class="bg-white hover:bg-gray-100 text-black font-medium px-4 sm:px-5 py-1.5 sm:py-2 rounded-full transition shadow-sm text-xs sm:text-sm">
+          Sign up
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 w-full max-w-[1040px] mx-auto px-6 sm:px-12 lg:px-20 pt-16 sm:pt-24 pb-20 relative z-10">
+
+    <div class="mb-14 sm:mb-20">
+      <h1 class="font-serif font-normal text-5xl sm:text-7xl lg:text-[88px] leading-[1.04] tracking-[-0.03em] text-white">
+        Everyone has a<br>
+        story to tell
+      </h1>
+    </div>
+
+    <div class="space-y-10 sm:space-y-12 text-gray-200 text-lg sm:text-[21px] leading-[1.65] font-light max-w-[780px]">
+
+      <p>
+        Muhfil is a home for human stories and ideas. Here, anyone can share knowledge and wisdom with the world—without having to build a mailing list or a following first. The internet is noisy and chaotic; Muhfil is quiet yet full of insight. It's simple, beautiful, collaborative, and helps you find the right readers for whatever you have to say.
+      </p>
+
+      <div>
+        <p class="inline-block bg-white/10 text-white font-normal px-3 py-1.5 rounded text-lg sm:text-[21px] leading-[1.65] backdrop-blur-sm border border-white/10">
+          Ultimately, our goal is to deepen our collective understanding of the world through the power of writing.
+        </p>
+      </div>
+
+      <p>
+        We believe that what you read and write matters. Words can divide or empower us, inspire or discourage us. In a world where the most sensational and surface-level stories often win, we’re building a system that rewards depth, nuance, and time well spent. A space for thoughtful conversation more than drive-by takes, and substance over packaging.
+      </p>
+
+      <p>
+        Over 100 million people connect and share their wisdom on Muhfil every month. They’re software developers, amateur novelists, product designers, CEOs, and anyone burning with a story they need to get out into the world. They write about what they’re working on, what’s keeping them up at night, what they’ve lived through, and what they’ve learned that the rest of us might want to know too.
+      </p>
+
+      <p>
+        Instead of selling ads or selling your data, we’re supported by a growing community of over a million <a href="{% url 'feed' %}" class="text-white underline underline-offset-4 decoration-white/60 hover:decoration-white transition">Muhfil members</a> who believe in our mission. If you’re new here, <a href="{% url 'feed' %}" class="text-white underline underline-offset-4 decoration-white/60 hover:decoration-white transition">start reading</a>. Dive deeper into whatever matters to you. Find a post that helps you learn something new, or reconsider something familiar—and then <a href="{% url 'write' %}" class="text-white underline underline-offset-4 decoration-white/60 hover:decoration-white transition">write your story</a>.
+      </p>
+
+    </div>
+
+    <div class="mt-20 pt-12 border-t border-white/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 max-w-[780px]">
+      <div>
+        <h3 class="font-serif text-2xl sm:text-3xl text-white font-normal">Ready to share your story?</h3>
+        <p class="text-gray-400 text-sm mt-1">Join over 100 million people reading and writing on Muhfil.</p>
+      </div>
+      <div class="flex items-center space-x-3 shrink-0">
+        <button type="button" data-auth-modal="signup" class="bg-white hover:bg-gray-100 text-black font-medium px-6 py-2.5 rounded-full transition text-sm shadow">
+          Get started
+        </button>
+        <a href="{% url 'feed' %}" class="border border-white/60 hover:border-white text-white font-normal px-5 py-2.5 rounded-full transition text-sm">
+          Start reading
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="w-full border-t border-white/10 py-8 px-6 bg-[#151515] relative z-10">
+    <div class="max-w-[1280px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
+      <div class="flex items-center space-x-2">
+        <a href="{% url 'index' %}" class="font-serif font-bold text-lg text-white hover:underline">Muhfil</a>
+        <span>&copy; 2026 Muhfil. All rights reserved.</span>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+        <a href="{% url 'about' %}" class="hover:text-white transition">About</a>
+        <a href="{% url 'feed' %}" class="hover:text-white transition">Explore</a>
+        <a href="{% url 'write' %}" class="hover:text-white transition">Write</a>
+        <button type="button" data-auth-modal="signin" class="hover:text-white transition">Sign in</button>
+        <button type="button" data-auth-modal="signup" class="hover:text-white transition">Sign up</button>
+      </div>
+    </div>
+  </footer>
+
+{% endblock layout %}
+

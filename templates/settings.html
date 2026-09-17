@@ -1,0 +1,311 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Settings{% endblock %}
+{% block nav_page %}settings{% endblock %}
+
+{% block responses_drawer %}{% endblock %}
+
+{% block content %}
+
+  <div class="w-full max-w-[880px] px-6 sm:px-12 lg:px-16 py-10 min-h-screen min-w-0">
+
+    <main class="w-full min-w-0">
+      <!-- Page Header -->
+      <div class="mb-8">
+        <h1 class="font-sans font-bold text-3xl sm:text-4xl text-gray-900 dark:text-white tracking-tight">Settings</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your account preferences, profile details, and security.</p>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div data-tabs-group="settings-tabs" class="flex items-center space-x-8 border-b border-gray-200 dark:border-[#242424] mb-8 text-sm font-medium overflow-x-auto">
+        <button type="button" data-tab-target="settings-tab-account" class="pb-3 border-b-2 border-black dark:border-white font-bold text-black dark:text-white whitespace-nowrap transition-colors">
+          Account
+        </button>
+        <button type="button" data-tab-target="settings-tab-publishing" class="pb-3 border-b-2 border-transparent text-gray-500 hover:text-black dark:hover:text-white whitespace-nowrap transition-colors">
+          Publishing
+        </button>
+        <button type="button" data-tab-target="settings-tab-notifications" class="pb-3 border-b-2 border-transparent text-gray-500 hover:text-black dark:hover:text-white whitespace-nowrap transition-colors">
+          Notifications
+        </button>
+      </div>
+
+      <!-- ACCOUNT TAB -->
+      <div id="settings-tab-account" data-tab-panel-group="settings-tabs" class="space-y-6">
+
+        <form id="settings-profile-form" method="POST" action="{% url 'update_settings' %}" enctype="multipart/form-data" class="space-y-6">
+          {% csrf_token %}
+
+          <!-- Profile Photo -->
+          <div class="py-5 border-b border-gray-100 dark:border-[#242424] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Profile Photo</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Clear photos make it easier for readers to recognize you.</p>
+            </div>
+            <div class="flex items-center space-x-4 shrink-0">
+              {% if user.get_avatar_url %}
+              <img id="avatar-preview" src="{{ user.get_avatar_url }}" class="w-16 h-16 rounded-full object-cover ring-2 ring-gray-100 dark:ring-[#2a2a2a] shadow-sm" alt="{{ user.get_display_name }}">
+              {% else %}
+              <div id="avatar-fallback" class="w-16 h-16 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-bold text-xl ring-2 ring-gray-100 dark:ring-[#2a2a2a] shadow-sm">
+                {{ user.username|first|upper }}
+              </div>
+              <img id="avatar-preview" class="w-16 h-16 rounded-full object-cover ring-2 ring-gray-100 dark:ring-[#2a2a2a] shadow-sm hidden" alt="{{ user.get_display_name }}">
+              {% endif %}
+              <div>
+                <label for="avatar-input" class="cursor-pointer inline-flex items-center space-x-2 px-4 py-2 rounded-full border border-gray-300 dark:border-[#333] hover:border-black dark:hover:border-white text-xs font-semibold text-gray-800 dark:text-gray-200 transition-colors bg-white dark:bg-[#1a1a1a] shadow-2xs">
+                  <i class="bi bi-camera"></i>
+                  <span>Change photo</span>
+                </label>
+                <input type="file" id="avatar-input" name="avatar" accept="image/*" class="hidden">
+              </div>
+            </div>
+          </div>
+
+          <!-- Full Name -->
+          <div class="py-5 border-b border-gray-100 dark:border-[#242424] space-y-2">
+            <div>
+              <label for="settings-name" class="font-semibold text-sm text-gray-900 dark:text-white block">Full name</label>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Appears on your profile page and as your author byline across Muhfil.</p>
+            </div>
+            <div class="max-w-md pt-1">
+              <input type="text" id="settings-name" name="name" value="{{ user.get_full_name|default:user.username }}" class="w-full px-3.5 py-2 text-sm rounded-xl border border-gray-200 dark:border-[#333] bg-white dark:bg-[#181818] text-gray-900 dark:text-white focus:outline-none focus:border-medium-green focus:ring-1 focus:ring-medium-green transition" placeholder="Your full name">
+            </div>
+          </div>
+
+          <!-- Username -->
+          <div class="py-5 border-b border-gray-100 dark:border-[#242424] space-y-2">
+            <div>
+              <p class="font-semibold text-sm text-gray-900 dark:text-white">Username</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Your unique identifier and public profile link.</p>
+            </div>
+            <div class="flex items-center space-x-2 pt-1">
+              <div class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl border border-gray-200 dark:border-[#333] bg-gray-50 dark:bg-[#1a1a1a] text-sm text-gray-800 dark:text-gray-200">
+                <span class="text-gray-400 select-none">muhfil.uz/@</span>
+                <span class="font-semibold">{{ user.username }}</span>
+              </div>
+              <button type="button" data-action="copy-link" class="p-2 rounded-xl text-gray-500 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#222] transition" title="Copy profile URL">
+                <i class="bi bi-copy text-sm"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Short Bio -->
+          <div class="py-5 border-b border-gray-100 dark:border-[#242424] space-y-2">
+            <div>
+              <label for="settings-bio" class="font-semibold text-sm text-gray-900 dark:text-white block">Short bio</label>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Appears on your profile and next to your published stories. Maximum 160 characters.</p>
+            </div>
+            <div class="max-w-xl pt-1">
+              <textarea id="settings-bio" name="bio" rows="3" maxlength="160" placeholder="Write a short bio..." class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-[#333] bg-white dark:bg-[#181818] text-gray-900 dark:text-white focus:outline-none focus:border-medium-green focus:ring-1 focus:ring-medium-green transition resize-none">{{ user.bio }}</textarea>
+              <div class="flex justify-end mt-1">
+                <span id="bio-char-count" class="text-[11px] text-gray-400">0/160</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Email Address -->
+          <div class="py-5 border-b border-gray-100 dark:border-[#242424] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <p class="font-semibold text-sm text-gray-900 dark:text-white">Email address</p>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                  <i class="bi bi-patch-check-fill mr-1 text-[10px]"></i>Verified
+                </span>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Your email is used for sign in, notifications, and security updates.</p>
+              <p class="text-sm font-medium text-gray-900 dark:text-gray-200 mt-1 font-mono text-xs">{{ user.email|default:"No email set" }}</p>
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div class="pt-2">
+            <button type="submit" id="save-settings-btn" class="inline-flex items-center space-x-2 px-7 py-2.5 rounded-full bg-medium-green hover:bg-medium-green-hover text-white text-sm font-semibold transition-all duration-150 shadow-sm active:scale-95">
+              <i class="bi bi-check-lg"></i>
+              <span>Save changes</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- PASSWORD & SECURITY SECTION -->
+        <div class="pt-8 mt-10 border-t border-gray-200 dark:border-[#242424]">
+          <div class="p-6 sm:p-7 rounded-2xl border border-gray-200 dark:border-[#262626] bg-gray-50/50 dark:bg-[#161616]">
+            <div class="mb-5">
+              <h2 class="font-sans font-bold text-lg text-gray-900 dark:text-white">Password & Security</h2>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Keep your account secure with a strong password of at least 8 characters.</p>
+            </div>
+
+            <form id="change-password-form" class="space-y-4 max-w-md">
+              <div>
+                <label class="font-semibold text-xs text-gray-700 dark:text-gray-300 block mb-1">Current password</label>
+                <div class="relative">
+                  <input type="password" name="current_password" required class="w-full px-3.5 py-2 text-sm rounded-xl border border-gray-200 dark:border-[#333] bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-white focus:outline-none focus:border-medium-green focus:ring-1 focus:ring-medium-green pr-10">
+                  <button type="button" data-toggle-pw class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="bi bi-eye"></i></button>
+                </div>
+              </div>
+              <div>
+                <label class="font-semibold text-xs text-gray-700 dark:text-gray-300 block mb-1">New password</label>
+                <div class="relative">
+                  <input type="password" name="new_password" required minlength="8" class="w-full px-3.5 py-2 text-sm rounded-xl border border-gray-200 dark:border-[#333] bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-white focus:outline-none focus:border-medium-green focus:ring-1 focus:ring-medium-green pr-10">
+                  <button type="button" data-toggle-pw class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="bi bi-eye"></i></button>
+                </div>
+              </div>
+              <div>
+                <label class="font-semibold text-xs text-gray-700 dark:text-gray-300 block mb-1">Confirm new password</label>
+                <div class="relative">
+                  <input type="password" name="confirm_password" required minlength="8" class="w-full px-3.5 py-2 text-sm rounded-xl border border-gray-200 dark:border-[#333] bg-white dark:bg-[#1c1c1c] text-gray-900 dark:text-white focus:outline-none focus:border-medium-green focus:ring-1 focus:ring-medium-green pr-10">
+                  <button type="button" data-toggle-pw class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="bi bi-eye"></i></button>
+                </div>
+              </div>
+              <div class="pt-2">
+                <button type="submit" id="change-password-btn" class="px-5 py-2 rounded-full border border-gray-300 dark:border-gray-700 hover:border-black dark:hover:border-white text-gray-800 dark:text-gray-200 text-xs font-semibold transition-all bg-white dark:bg-[#202020] shadow-2xs">
+                  Update password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- DANGER ZONE -->
+        <div class="pt-8 mt-8 border-t border-gray-200 dark:border-[#242424]">
+          <div class="p-6 rounded-2xl border border-red-200/60 dark:border-red-950/40 bg-red-50/20 dark:bg-red-950/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 class="font-sans font-bold text-sm text-red-600 dark:text-red-400">Deactivate account</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Deactivating will temporarily suspend your stories and public profile.</p>
+            </div>
+            <button type="button" data-coming-soon="Account deactivation" class="px-4 py-2 rounded-full border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs font-semibold transition shrink-0">
+              Deactivate account
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PUBLISHING TAB -->
+      <div id="settings-tab-publishing" data-tab-panel-group="settings-tabs" class="space-y-6 hidden">
+        <div class="py-5 border-b border-gray-100 dark:border-[#242424]">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div class="space-y-1 max-w-md">
+              <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Default Story License</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Choose the copyright license applied to your published stories by default.</p>
+            </div>
+            <div class="w-full sm:w-64">
+              <form method="POST" action="{% url 'update_settings' %}">
+                {% csrf_token %}
+                <select name="license" class="w-full px-3.5 py-2 text-xs rounded-xl border border-gray-200 dark:border-[#333] bg-white dark:bg-[#181818] text-gray-900 dark:text-white focus:outline-none focus:border-medium-green">
+                  <option value="All Rights Reserved" {% if user.license == 'All Rights Reserved' %}selected{% endif %}>All Rights Reserved</option>
+                  <option value="Creative Commons (CC-BY)" {% if user.license == 'Creative Commons (CC-BY)' %}selected{% endif %}>Creative Commons (CC-BY)</option>
+                  <option value="Creative Commons (CC-BY-SA)" {% if user.license == 'Creative Commons (CC-BY-SA)' %}selected{% endif %}>Creative Commons (CC-BY-SA)</option>
+                  <option value="Public Domain" {% if user.license == 'Public Domain' %}selected{% endif %}>Public Domain</option>
+                </select>
+                <div class="mt-2 flex justify-end">
+                  <button type="submit" class="px-3 py-1 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium">Save License</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="py-5 border-b border-gray-100 dark:border-[#242424] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Custom Domain</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Connect your custom domain (e.g. yourname.com) to your Muhfil blog.</p>
+          </div>
+          <button type="button" data-coming-soon="Custom domains" class="px-4 py-2 rounded-full border border-gray-300 dark:border-[#333] hover:border-black dark:hover:border-white text-xs font-semibold text-gray-800 dark:text-gray-200 transition bg-white dark:bg-[#1a1a1a] shrink-0">
+            Upgrade to connect
+          </button>
+        </div>
+      </div>
+
+      <!-- NOTIFICATIONS TAB -->
+      <div id="settings-tab-notifications" data-tab-panel-group="settings-tabs" class="space-y-6 hidden">
+        <div class="py-5 border-b border-gray-100 dark:border-[#242424] flex items-center justify-between gap-4">
+          <div class="space-y-1 pr-4">
+            <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Email Digest</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Receive a curated daily digest of top stories from writers and topics you follow.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input type="checkbox" {% if user.email_digest %}checked{% endif %} data-action="toggle-notification" data-label="email_digest" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-[#2a2a2a] peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-medium-green"></div>
+          </label>
+        </div>
+
+        <div class="py-5 border-b border-gray-100 dark:border-[#242424] flex items-center justify-between gap-4">
+          <div class="space-y-1 pr-4">
+            <h3 class="font-semibold text-sm text-gray-900 dark:text-white">Social Activity Notifications</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Get notified when people clap for your stories, leave responses, or start following you.</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input type="checkbox" {% if user.social_activity_notifications %}checked{% endif %} data-action="toggle-notification" data-label="social_activity_notifications" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-[#2a2a2a] peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-medium-green"></div>
+          </label>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+  // Live Avatar Image Preview
+  const avatarInput = document.getElementById('avatar-input');
+  const avatarPreview = document.getElementById('avatar-preview');
+  const avatarFallback = document.getElementById('avatar-fallback');
+
+  if (avatarInput && avatarPreview) {
+    avatarInput.addEventListener('change', function(e) {
+      const file = e.target.files && e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          avatarPreview.src = evt.target.result;
+          avatarPreview.classList.remove('hidden');
+          if (avatarFallback) avatarFallback.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Live Bio Character Counter
+  const bioInput = document.getElementById('settings-bio');
+  const bioCharCount = document.getElementById('bio-char-count');
+  if (bioInput && bioCharCount) {
+    const updateBioCount = () => {
+      const len = bioInput.value.length;
+      bioCharCount.textContent = `${len}/160`;
+    };
+    bioInput.addEventListener('input', updateBioCount);
+    updateBioCount();
+  }
+
+  // Password Visibility Toggles
+  document.querySelectorAll('[data-toggle-pw]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = btn.parentElement.querySelector('input');
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bi-eye');
+        icon.classList.add('bi-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('bi-eye-slash');
+        icon.classList.add('bi-eye');
+      }
+    });
+  });
+
+  // Settings Form Submit Animation
+  const profileForm = document.getElementById('settings-profile-form');
+  if (profileForm) {
+    profileForm.addEventListener('submit', () => {
+      if (window.showLoadingAnimation) {
+        window.showLoadingAnimation('Saving profile settings...');
+      }
+    });
+  }
+</script>
+{% endblock extra_js %}

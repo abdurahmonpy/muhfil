@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="{% static 'js/theme.js' %}"></script>
+  <title>{% block title %}Muhfil{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'images/muhfil-emblem-black.png' %}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="{% static 'js/tailwind.config.js' %}"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="bg-white dark:bg-[#121212] text-medium-dark dark:text-[#e6e6e6] antialiased min-h-screen flex flex-col">
+  {% block content %}{% endblock %}
+  <div id="toast-container" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 pointer-events-none"></div>
+  <script src="{% static 'js/main.js' %}" defer></script>
+  <script src="{% static 'js/pages.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

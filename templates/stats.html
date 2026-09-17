@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Stats{% endblock %}
+{% block nav_page %}stats{% endblock %}
+
+{% block responses_drawer %}{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/stats.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+
+      <main class="max-w-[1000px] w-full mx-auto px-4 sm:px-8 py-10">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 class="font-sans font-bold text-3xl sm:text-4xl text-gray-900 dark:text-white">Stats</h1>
+            <p class="text-xs text-gray-500 mt-1">Analytics for published stories and audience reach.</p>
+          </div>
+          <div class="inline-flex rounded-lg border border-gray-200 dark:border-[#333] p-1 bg-white dark:bg-[#1a1a1a] text-xs">
+            <button type="button" data-stats-period="30 Days" class="px-3 py-1.5 rounded-md font-semibold bg-gray-100 dark:bg-[#252525] text-black dark:text-white">30 Days</button>
+            <button type="button" data-stats-period="90 Days" class="px-3 py-1.5 rounded-md text-gray-500 hover:text-black dark:hover:text-white">90 Days</button>
+            <button type="button" data-stats-period="All Time" class="px-3 py-1.5 rounded-md text-gray-500 hover:text-black dark:hover:text-white">All Time</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <div class="p-5 rounded-xl border border-gray-200 dark:border-[#242424] bg-gray-50/50 dark:bg-[#181818]">
+            <p class="text-xs text-gray-500 font-medium">Total Views</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ total_views|default:0 }}</p>
+            <span class="text-[11px] text-medium-green font-semibold">Story impressions</span>
+          </div>
+          <div class="p-5 rounded-xl border border-gray-200 dark:border-[#242424] bg-gray-50/50 dark:bg-[#181818]">
+            <p class="text-xs text-gray-500 font-medium">Total Reads</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ total_reads|default:0 }}</p>
+            <span class="text-[11px] text-medium-green font-semibold">Completed reads</span>
+          </div>
+          <div class="p-5 rounded-xl border border-gray-200 dark:border-[#242424] bg-gray-50/50 dark:bg-[#181818]">
+            <p class="text-xs text-gray-500 font-medium">Stories Published</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ posts|length }}</p>
+            <span class="text-[11px] text-gray-400">Live on Muhfil</span>
+          </div>
+          <div class="p-5 rounded-xl border border-gray-200 dark:border-[#242424] bg-gray-50/50 dark:bg-[#181818]">
+            <p class="text-xs text-gray-500 font-medium">Fans</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ fans_count|default:0 }}</p>
+            <span class="text-[11px] text-gray-400">Unique clappers</span>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <h3 class="font-bold text-lg text-gray-900 dark:text-white">Story Breakdown</h3>
+          <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#242424]">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-gray-50 dark:bg-[#1c1c1c] text-gray-500 border-b border-gray-200 dark:border-[#242424]">
+                <tr>
+                  <th class="p-3.5 font-semibold">Story Title</th>
+                  <th class="p-3.5 font-semibold">Views</th>
+                  <th class="p-3.5 font-semibold">Reads</th>
+                  <th class="p-3.5 font-semibold">Claps</th>
+                  <th class="p-3.5 font-semibold">Comments</th>
+                </tr>
+              </thead>
+              <tbody id="stats-table-body" class="divide-y divide-gray-100 dark:divide-[#262626]">
+                {% for story in posts %}
+                <tr class="hover:bg-gray-50/50 dark:hover:bg-[#1a1a1a]">
+                  <td class="p-3.5">
+                    <a href="{{ story.get_absolute_url }}" class="font-bold text-gray-900 dark:text-white hover:underline block text-sm">
+                      {{ story.title }}
+                    </a>
+                    <span class="text-[11px] text-gray-400">Published {{ story.created|date:"M j, Y" }} · {{ story.read_time_minutes }} min read</span>
+                  </td>
+                  <td class="p-3.5 font-semibold">{{ story.views_count }}</td>
+                  <td class="p-3.5">{{ story.reads_count }}</td>
+                  <td class="p-3.5 font-semibold text-medium-green">{{ story.total_claps }}</td>
+                  <td class="p-3.5">{{ story.comments_count }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="p-8 text-center text-gray-400">
+                    <p class="text-sm">You haven't published any stories yet.</p>
+                    <a href="{% url 'write' %}" class="inline-block mt-3 px-5 py-2 rounded-full bg-medium-green text-white text-xs font-semibold hover:bg-medium-green-hover transition">
+                      Write your first story
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+
+{% endblock content %}

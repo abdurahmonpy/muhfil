@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ profile_user.get_display_name|default:profile_user.username }}{% endblock %}
+{% block nav_page %}profile{% endblock %}
+
+{% block content %}
+
+      <div class="max-w-[1140px] w-full mx-auto px-4 sm:px-8 py-8 flex justify-between gap-12">
+
+        <main class="flex-1 max-w-[680px] min-w-0">
+
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center space-x-2.5">
+              <h1 class="font-sans font-bold text-4xl sm:text-[44px] tracking-tight text-gray-900 dark:text-white">
+                {{ profile_user.get_display_name|default:profile_user.username }}
+              </h1>
+              
+              {% if profile_user.is_staff or profile_user.membership_tier == 'member' %}
+              <span class="text-[#1d9bf0] text-2xl flex items-center" title="Verified writer">
+                <i class="bi bi-patch-check-fill"></i>
+              </span>
+              {% endif %}
+            </div>
+            <div class="relative">
+              <button type="button" data-dropdown-toggle="profile-more-menu" class="p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors" title="More options">
+                <i class="bi bi-three-dots text-xl"></i>
+              </button>
+              <div id="profile-more-menu" class="dropdown-menu hidden absolute right-0 mt-1 w-48 rounded-xl bg-white dark:bg-[#1e1e1e] shadow-xl border border-gray-100 dark:border-[#333] py-2 z-30 text-xs text-gray-700 dark:text-gray-300">
+                <button type="button" data-action="copy-link" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#282828] flex items-center space-x-2">
+                  <i class="bi bi-link-45deg text-sm"></i>
+                  <span>Copy link to profile</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div data-tabs-group="profile-tabs" class="flex items-center space-x-6 sm:space-x-8 border-b border-gray-200 dark:border-[#242424] mb-8 text-sm">
+            <button type="button" data-tab-target="tab-home" class="pb-3 border-b-2 border-black dark:border-white font-bold text-black dark:text-white transition-all">
+              Home
+            </button>
+            <button type="button" data-tab-target="tab-lists" class="pb-3 border-b-2 border-transparent text-gray-500 hover:text-black dark:hover:text-white transition-all">
+              Lists
+            </button>
+            {% if is_own_profile %}
+            <button type="button" data-tab-target="tab-drafts" class="pb-3 border-b-2 border-transparent text-gray-500 hover:text-black dark:hover:text-white transition-all">
+              Drafts ({{ draft_posts|length }})
+            </button>
+            {% endif %}
+            <button type="button" data-tab-target="tab-about" class="pb-3 border-b-2 border-transparent text-gray-500 hover:text-black dark:hover:text-white transition-all">
+              About
+            </button>
+          </div>
+
+          <div id="tab-home" data-tab-panel-group="profile-tabs" class="space-y-8">
+            <div class="pt-2">
+              <h2 class="font-bold text-base text-gray-900 dark:text-white mb-6">Published Stories</h2>
+
+              {% for story in published_posts %}
+              <article data-clickable-card data-href="{{ story.get_absolute_url }}" class="medium-story-card border-b border-gray-100 dark:border-[#242424] pb-8 mb-8 cursor-pointer" data-post-id="{{ story.id }}">
+                <div class="flex items-start justify-between gap-6">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-2 text-xs text-gray-700 dark:text-gray-300 mb-2 font-normal flex-wrap">
+                      {% if profile_user.profile.avatar %}
+                      <img src="{{ profile_user.profile.avatar.url }}" class="w-4 h-4 rounded-full object-cover shrink-0" alt="{{ profile_user.username }}">
+                      {% else %}
+                      <span class="w-4 h-4 rounded bg-medium-green text-white flex items-center justify-center font-bold text-[9px] shrink-0">{{ profile_user.username|first|upper }}</span>
+                      {% endif %}
+                      <span class="truncate font-medium text-gray-900 dark:text-white">{{ profile_user.get_display_name|default:profile_user.username }}</span>
+                      <span class="text-gray-400">·</span>
+                      <span class="text-gray-500 shrink-0">{{ story.created|date:"M j, Y" }}</span>
+                    </div>
+
+                    <a href="{{ story.get_absolute_url }}" class="block group">
+                      <h3 class="font-bold text-xl sm:text-2xl text-gray-900 dark:text-white tracking-tight leading-snug group-hover:text-gray-600 dark:group-hover:text-gray-300 transition">
+                        {{ story.title }}
+                      </h3>
+                      {% if story.subtitle %}
+                      <p class="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
+                        {{ story.subtitle }}
+                      </p>
+                      {% endif %}
+                    </a>
+
+                    <div class="flex items-center justify-between pt-5 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      <div class="flex items-center space-x-5">
+                        <button type="button" data-action="clap" data-post-id="{{ story.id }}" class="flex items-center space-x-1.5 hover:text-black dark:hover:text-white transition" title="Like">
+                          <svg class="w-4 h-4 transition-transform fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="currentColor" fill-rule="evenodd" d="M10.702 5.25c-.166 0-.32.09-.402.234l-3.346 5.873a4.25 4.25 0 0 0-.531 2.568l.353 3.213a1.236 1.236 0 0 0 1.083 1.093l2.117.252a9.567 9.567 0 0 0 4.15-.422c.66-.22 1.188-.72 1.442-1.367l1.704-4.33a1.42 1.42 0 0 0-1.565-1.92l-3.416.593a1.562 1.562 0 0 1-1.8-1.84l.665-3.395a.463.463 0 0 0-.454-.552Zm-1.705-.509a1.963 1.963 0 0 1 3.631 1.349l-.665 3.396a.056.056 0 0 0 0 .03a.065.065 0 0 0 .017.025a.066.066 0 0 0 .025.017a.057.057 0 0 0 .03.001l3.415-.593a2.92 2.92 0 0 1 3.218 3.947l-1.704 4.33a3.846 3.846 0 0 1-2.365 2.241c-1.545.514-3.184.68-4.8.488l-2.117-.251a2.736 2.736 0 0 1-2.397-2.419l-.353-3.213a5.75 5.75 0 0 1 .72-3.475l3.345-5.873Z" clip-rule="evenodd"/>
+                          </svg>
+                          <span class="clap-count">{{ story.total_claps }}</span>
+                        </button>
+                        <a href="{{ story.get_absolute_url }}#responses" class="flex items-center space-x-1.5 hover:text-black dark:hover:text-white transition" title="Responses">
+                          <i class="bi bi-chat text-sm"></i>
+                          <span>{{ story.comments_count }}</span>
+                        </a>
+                        <span class="text-xs text-gray-400">{{ story.read_time_minutes }} min read</span>
+                      </div>
+
+                      <div class="flex items-center space-x-3 text-sm">
+                        <button type="button" data-action="bookmark" class="p-1 hover:text-black dark:hover:text-white transition" title="Save story">
+                          <i class="bi bi-bookmark text-base"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <a href="{{ story.get_absolute_url }}" class="shrink-0 block overflow-hidden rounded-md group">
+                    <img src="{{ story.get_cover }}" class="w-[120px] h-[80px] sm:w-[150px] sm:h-[95px] object-cover rounded group-hover:opacity-90 transition shadow-sm" alt="{{ story.title }}">
+                  </a>
+                </div>
+              </article>
+              {% empty %}
+              <div class="py-12 text-center text-gray-500">
+                <p class="text-base font-semibold text-gray-700 dark:text-gray-300">No published stories yet.</p>
+                {% if is_own_profile %}
+                <a href="{% url 'write' %}" class="inline-block mt-3 px-5 py-2 rounded-full bg-medium-green text-white text-xs font-semibold hover:bg-medium-green-hover transition">
+                  Write your first story
+                </a>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div id="tab-lists" data-tab-panel-group="profile-tabs" class="space-y-6 hidden">
+            <h2 class="font-bold text-base text-gray-900 dark:text-white mb-4">Lists</h2>
+            {% for list_obj in public_lists %}
+            <div class="p-6 rounded-xl border border-gray-100 dark:border-[#242424] bg-white dark:bg-[#181818] flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-lg text-gray-900 dark:text-white">{{ list_obj.name }}</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ list_obj.description|default:"No description" }}</p>
+                <span class="text-xs text-gray-400 mt-2 block">{{ list_obj.post_count }} story</span>
+              </div>
+              <a href="{% url 'lists' %}" class="text-xs font-semibold text-medium-green hover:underline">View list &rarr;</a>
+            </div>
+            {% empty %}
+            <div class="text-center py-8 text-gray-400 text-xs">
+              No public lists available.
+            </div>
+            {% endfor %}
+          </div>
+
+          {% if is_own_profile %}
+          <div id="tab-drafts" data-tab-panel-group="profile-tabs" class="space-y-6 hidden">
+            <h2 class="font-bold text-base text-gray-900 dark:text-white mb-4">Your Drafts</h2>
+            {% for draft in draft_posts %}
+            <div class="p-6 rounded-xl border border-gray-100 dark:border-[#242424] bg-white dark:bg-[#181818] flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-lg text-gray-900 dark:text-white">{{ draft.title }}</h3>
+                <p class="text-xs text-gray-400 mt-1">Saved {{ draft.created|timesince }} ago</p>
+              </div>
+              <a href="{% url 'write' %}" class="px-4 py-1.5 rounded-full bg-medium-green text-white text-xs font-semibold hover:bg-medium-green-hover transition">
+                Continue editing
+              </a>
+            </div>
+            {% empty %}
+            <div class="text-center py-8 text-gray-400 text-xs">
+              You have no active drafts.
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <div id="tab-about" data-tab-panel-group="profile-tabs" class="space-y-6 hidden">
+            <div class="space-y-6 text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+              <p>
+                {{ profile_user.bio|default:"This author hasn't added a bio yet." }}
+              </p>
+
+              <div class="p-6 rounded-2xl border border-gray-200 dark:border-[#282828] bg-gray-50/70 dark:bg-[#18181b] space-y-3 mt-6">
+                <h4 class="font-bold text-base text-gray-900 dark:text-white">Get updates whenever {{ profile_user.get_display_name|default:profile_user.username }} publishes.</h4>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Receive stories directly to your email inbox.</p>
+                <form id="newsletter-subscribe-form" class="flex flex-col sm:flex-row gap-3 pt-2">
+                  <input type="email" placeholder="Your email address" class="flex-1 px-4 py-2.5 rounded-full border border-gray-300 dark:border-gray-700 bg-white dark:bg-[#222] text-xs focus:outline-none focus:border-medium-green dark:text-white" required>
+                  <button type="submit" class="rounded-full bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 text-xs font-semibold hover:bg-gray-800 dark:hover:bg-gray-200 transition">
+                    Subscribe
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <aside class="hidden lg:block w-[320px] shrink-0 border-l border-gray-100 dark:border-[#242424] pl-8 space-y-6 sticky top-24 self-start">
+
+          <div class="relative w-20 h-20 rounded-full overflow-hidden shadow-sm bg-gray-100 dark:bg-[#202020] ring-1 ring-gray-200 dark:ring-gray-700">
+            {% if profile_user.profile.avatar %}
+            <img src="{{ profile_user.profile.avatar.url }}" class="w-full h-full object-cover" alt="{{ profile_user.username }}">
+            {% else %}
+            <div class="w-full h-full bg-medium-green text-white flex items-center justify-center font-bold text-2xl">
+              {{ profile_user.username|first|upper }}
+            </div>
+            {% endif %}
+          </div>
+
+          <div>
+            <h2 class="font-bold text-base text-gray-900 dark:text-white">{{ profile_user.get_display_name|default:profile_user.username }}</h2>
+            <p id="follower-count-display" class="text-xs text-gray-500 mt-0.5">{{ profile_user.follower_count }} follower{{ profile_user.follower_count|pluralize }}</p>
+          </div>
+
+          {% if profile_user.bio %}
+          <div class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed space-y-1 -mt-2">
+            <p>{{ profile_user.bio }}</p>
+          </div>
+          {% endif %}
+
+          <div>
+            {% if is_own_profile %}
+            <a href="{% url 'settings' %}" class="inline-block rounded-full border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-6 py-2 text-xs font-semibold hover:border-black dark:hover:border-white transition-all shadow-sm">
+              Edit profile
+            </a>
+            {% else %}
+            <button type="button" data-action="toggle-follow" data-user-id="{{ profile_user.id }}" data-author="{{ profile_user.username }}" data-following="{{ is_following|yesno:'true,false' }}" class="rounded-full {% if is_following %}border border-gray-400 dark:border-gray-500 text-gray-800 dark:text-gray-200 bg-transparent hover:border-red-500 hover:text-red-500{% else %}bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200{% endif %} px-6 py-2 text-xs font-semibold transition-all shadow-sm">
+              {% if is_following %}Following{% else %}Follow{% endif %}
+            </button>
+            {% endif %}
+          </div>
+
+          <div class="pt-6 border-t border-gray-100 dark:border-[#242424] space-y-4">
+            <h3 class="font-bold text-sm text-gray-900 dark:text-white">Following ({{ profile_user.following_count }})</h3>
+
+            <div class="space-y-3.5">
+              {% for f in profile_user.following.all|slice:":6" %}
+              <div class="flex items-center justify-between text-xs">
+                <a href="{% url 'profile_user' f.username %}" class="flex items-center space-x-2.5 text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white group">
+                  {% if f.profile.avatar %}
+                  <img src="{{ f.profile.avatar.url }}" class="w-5 h-5 rounded-full object-cover" alt="{{ f.username }}">
+                  {% else %}
+                  <span class="w-5 h-5 rounded-full bg-medium-green text-white flex items-center justify-center font-bold text-[9px]">{{ f.username|first|upper }}</span>
+                  {% endif %}
+                  <span class="font-medium group-hover:underline truncate">{{ f.get_display_name|default:f.username }}</span>
+                </a>
+              </div>
+              {% empty %}
+              <p class="text-xs text-gray-400 italic">Not following anyone yet.</p>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="pt-8 text-[11px] text-gray-400 flex flex-wrap gap-x-2.5 gap-y-1.5 leading-normal">
+            <a href="{% url 'about' %}" class="hover:text-gray-600 dark:hover:text-gray-200 font-medium">About</a>
+            <a href="#" data-coming-soon="Help Center" class="hover:text-gray-600 dark:hover:text-gray-200">Help</a>
+            <a href="#" data-coming-soon="Privacy Policy" class="hover:text-gray-600 dark:hover:text-gray-200">Privacy</a>
+            <a href="#" data-coming-soon="Terms of Service" class="hover:text-gray-600 dark:hover:text-gray-200">Terms</a>
+          </div>
+
+        </aside>
+      </div>
+{% endblock content %}

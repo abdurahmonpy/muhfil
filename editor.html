@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New story – Medium</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --text: #242424;
+    --placeholder: #b0b0b0;
+    --green-bg: #c6fac3;
+    --green-text: #1a6b4a;
+    --toolbar-bg: #3a3a3a;
+  }
+
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: #fff;
+    color: var(--text);
+  }
+
+  /* ===== Header ===== */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 62px;
+    padding: 0 24px;
+    border-bottom: 1px solid #f2f2f2;
+  }
+
+  .logo-group {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .logo {
+    font-family: Georgia, serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    cursor: pointer;
+  }
+
+  .draft-label {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    color: #999;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .publish-btn {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    background: var(--green-bg);
+    color: var(--green-text);
+    border: none;
+    border-radius: 99px;
+    padding: 7px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .publish-btn:hover { opacity: .8; }
+
+  .icon-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #666;
+    cursor: pointer;
+  }
+  .icon-btn:hover { color: #000; }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e0504a;
+    color: #fff;
+    font-family: sans-serif;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* ===== Editor ===== */
+  .editor {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 40px 24px 120px;
+  }
+
+  .title-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-family: Georgia, serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--text);
+    padding: 20px 0 10px;
+  }
+  .title-input::placeholder { color: var(--placeholder); }
+
+  .body-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 8px;
+  }
+
+  .plus-btn {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    border-radius: 50%;
+    border: 1px solid #e6e6e6;
+    background: #fff;
+    color: #999;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    margin-top: 14px;
+  }
+  .plus-btn:hover { background: #f7f7f7; color: #333; }
+
+  .story-input {
+    width: 100%;
+    min-height: 300px;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: Georgia, serif;
+    font-size: 21px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .story-input::placeholder { color: var(--placeholder); }
+
+  /* ===== Bottom help section ===== */
+  .help-section {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fafafa;
+    border-top: 1px solid #eee;
+    padding: 28px 20px 60px;
+    text-align: center;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+  }
+
+  .help-close {
+    position: absolute;
+    top: 14px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #999;
+    cursor: pointer;
+  }
+
+  .help-text {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .help-carousel {
+    position: relative;
+    display: inline-block;
+    padding: 0 30px;
+  }
+
+  .carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: #999;
+    cursor: pointer;
+  }
+  .carousel-arrow.prev { left: -10px; }
+  .carousel-arrow.next { right: -10px; }
+
+  .toolbar-demo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--toolbar-bg);
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-bottom: 14px;
+  }
+
+  .toolbar-demo button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    padding: 4px 8px;
+    cursor: default;
+    border-radius: 4px;
+  }
+
+  .toolbar-arrow {
+    color: var(--toolbar-bg);
+    font-size: 0;
+    line-height: 0;
+    display: block;
+    margin: 0 auto;
+    width: 0; height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid var(--toolbar-bg);
+    margin-top: -1px;
+    margin-bottom: 12px;
+  }
+
+  .sample-highlight {
+    display: inline-block;
+    background: #b3d7f5;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: Georgia, serif;
+    font-size: 18px;
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-group">
+      <span class="logo">M</span>
+      <span class="draft-label">Draft</span>
+    </div>
+    <div class="header-actions">
+      <button class="publish-btn">Publish</button>
+      <button class="icon-btn" title="More">···</button>
+      <button class="icon-btn" title="Notifications">🔔</button>
+      <div class="avatar">A</div>
+    </div>
+  </header>
+
+  <main class="editor">
+    <input class="title-input" type="text" placeholder="Title" />
+    <div class="body-row">
+      <button class="plus-btn" title="Add">＋</button>
+      <textarea class="story-input" placeholder="Tell your story..."></textarea>
+    </div>
+  </main>
+
+  <div class="help-section" id="helpSection">
+    <button class="help-close" onclick="document.getElementById('helpSection').remove()">×</button>
+    <p class="help-text">Select text to change formatting, add headers, or create links.</p>
+    <div class="help-carousel">
+      <button class="carousel-arrow prev">‹</button>
+      <div>
+        <div class="toolbar-demo">
+          <button><b>B</b></button>
+          <button><i>i</i></button>
+          <button>🔗</button>
+          <button style="font-size:19px"><b>T</b></button>
+          <button style="font-size:13px"><b>T</b></button>
+          <button>❝</button>
+          <button>⛶</button>
+          <button>💬</button>
+        </div>
+        <div class="toolbar-arrow"></div>
+        <span class="sample-highlight">Writing on Medium</span>
+      </div>
+      <button class="carousel-arrow next">›</button>
+    </div>
+  </div>
+
+</body>
+</html>
