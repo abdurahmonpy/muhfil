@@ -15,3 +15,13 @@ Muhfil — zamonaviy, tezkor va qulay blog platformasi (Medium kloni).
 ## Texnologiyalar
 - **Backend:** Python / Django
 - **Frontend:** HTML5, Tailwind CSS, Vanilla JavaScript, Bootstrap Icons
+- **Production Server:** Gunicorn, WhiteNoise, PostgreSQL
+
+## Railway orqali Deploy qilish
+1. Railway loyihasiga ushbu repozitoriyni ulang.
+2. PostgreSQL bazasini loyihaga qo‘shing (DATABASE_URL avtomatik ulanadi).
+3. Kerakli o‘zgaruvchilarni kiriting:
+   - GOOGLE_CLIENT_ID
+   - GOOGLE_CLIENT_SECRET
+   - SECRET_KEY
+4. Networking bo‘limida **Generate Domain** tugmasini bosing (Port: 8080).
