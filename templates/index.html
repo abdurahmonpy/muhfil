@@ -28,8 +28,8 @@
     </div>
   </header>
 
-  <section class="hero-section w-full border-b border-black bg-[#F7F4ED]" style="background-color: #F7F4ED !important; border-bottom: 1px solid #000000 !important;">
-    <div class="max-w-[1280px] w-full mx-auto px-6 sm:px-12 lg:px-20 pt-6 pb-10 sm:pt-8 sm:pb-12 lg:pt-10 lg:pb-14 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
+  <section class="hero-section w-full {% if trending_posts or posts %}border-b border-black pt-6 pb-10 sm:pt-8 sm:pb-12 lg:pt-10 lg:pb-14{% else %}flex-1 flex items-center py-12 sm:py-16 lg:py-20{% endif %} bg-[#F7F4ED]" style="background-color: #F7F4ED !important; {% if trending_posts or posts %}border-bottom: 1px solid #000000 !important;{% endif %}">
+    <div class="max-w-[1280px] w-full mx-auto px-6 sm:px-12 lg:px-20 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
 
       <div class="lg:col-span-7 space-y-5 sm:space-y-6 -mt-1 sm:-mt-2 lg:-mt-3">
         <h1 class="hero-headline font-serif font-normal text-5xl sm:text-6xl md:text-7xl lg:text-[84px] tracking-[-0.04em] leading-[0.95] text-black" style="color: #000000 !important;">
@@ -53,7 +53,7 @@
           <img 
             src="{% static 'images/medium_landing_graphic.png' %}" 
             class="w-full h-auto object-contain select-none pointer-events-none drop-shadow-sm" 
-            alt="Medium Art: Green flower, geometric diagrams, creative hand drawing, and constellations"
+            alt="Muhfil Illustration"
           />
         </div>
       </div>
@@ -61,6 +61,7 @@
     </div>
   </section>
 
+  {% if trending_posts %}
   <section class="trending-section w-full border-b border-gray-200 bg-white py-12" style="background-color: #ffffff !important; color: #242424 !important;">
     <div class="max-w-[1280px] mx-auto px-6 sm:px-12 lg:px-20">
 
@@ -72,262 +73,131 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-
+        {% for post in trending_posts %}
         <article class="flex items-start gap-4 group">
-          <span class="font-bold text-3xl text-gray-200 group-hover:text-gray-400 transition select-none" style="color: #e5e7eb !important;">01</span>
+          <span class="font-bold text-3xl text-gray-200 group-hover:text-gray-400 transition select-none" style="color: #e5e7eb !important;">
+            {{ forloop.counter|stringformat:"02d" }}
+          </span>
           <div class="space-y-1.5 flex-1 min-w-0">
             <div class="flex items-center space-x-2 text-xs text-gray-700">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&h=60&fit=crop" class="w-4 h-4 rounded-full object-cover" alt="Author">
-              <a href="{% url 'profile' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">Sumit Pandey</a>
-              <span class="text-gray-400">in</span>
-              <a href="{% url 'feed' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">Towards Deep Learning</a>
+              {% if post.author.get_avatar_url %}
+                <img src="{{ post.author.get_avatar_url }}" class="w-4 h-4 rounded-full object-cover" alt="{{ post.author.get_display_name }}">
+              {% else %}
+                <div class="w-4 h-4 rounded-full bg-neutral-200 flex items-center justify-center text-[9px] font-bold text-neutral-700 uppercase">
+                  {{ post.author.username|slice:":1" }}
+                </div>
+              {% endif %}
+              <a href="{% url 'user_profile' username=post.author.username %}" class="font-medium text-gray-900 hover:underline truncate max-w-[120px]" style="color: #000000 !important;">
+                {{ post.author.get_display_name }}
+              </a>
+              {% with first_tag=post.tags.first %}
+                {% if first_tag %}
+                  <span class="text-gray-400">in</span>
+                  <a href="{% url 'search' %}?topic={{ first_tag.name|urlencode }}" class="font-medium text-gray-900 hover:underline truncate max-w-[120px]" style="color: #000000 !important;">
+                    {{ first_tag.name }}
+                  </a>
+                {% endif %}
+              {% endwith %}
             </div>
-            <a href="{% url 'story' %}" class="block">
+            <a href="{% url 'story_detail' slug=post.slug %}" class="block">
               <h3 class="font-bold text-base text-gray-900 leading-snug group-hover:text-gray-600 transition line-clamp-2" style="color: #000000 !important;">
-                Why Small Models Will Dominate Consumer AI Applications
+                {{ post.title }}
               </h3>
             </a>
             <div class="flex items-center space-x-2 text-xs text-gray-500 pt-0.5" style="color: #6b7280 !important;">
-              <span>Jan 14</span>
+              <span>{{ post.created|date:"M j" }}</span>
               <span>·</span>
-              <span>4 min read</span>
-              <span class="text-amber-500 text-xs">★</span>
+              <span>{{ post.read_time }} min read</span>
             </div>
           </div>
         </article>
-
-        <article class="flex items-start gap-4 group">
-          <span class="font-bold text-3xl text-gray-200 group-hover:text-gray-400 transition select-none" style="color: #e5e7eb !important;">02</span>
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex items-center space-x-2 text-xs text-gray-700">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop" class="w-4 h-4 rounded-full object-cover" alt="Author">
-              <a href="{% url 'profile' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">Michal Malewicz</a>
-              <span class="text-gray-400">in</span>
-              <a href="{% url 'feed' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">Better Programming</a>
-            </div>
-            <a href="{% url 'story' %}" class="block">
-              <h3 class="font-bold text-base text-gray-900 leading-snug group-hover:text-gray-600 transition line-clamp-2" style="color: #000000 !important;">
-                When I See This In A Code Review, I Reject The PR Immediately
-              </h3>
-            </a>
-            <div class="flex items-center space-x-2 text-xs text-gray-500 pt-0.5" style="color: #6b7280 !important;">
-              <span>May 8</span>
-              <span>·</span>
-              <span>6 min read</span>
-            </div>
-          </div>
-        </article>
-
-        <article class="flex items-start gap-4 group">
-          <span class="font-bold text-3xl text-gray-200 group-hover:text-gray-400 transition select-none" style="color: #e5e7eb !important;">03</span>
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex items-center space-x-2 text-xs text-gray-700">
-              <img src="{% static 'images/divad_avatar_circle.png' %}" class="w-4 h-4 rounded-full object-cover" alt="Divad">
-              <a href="{% url 'profile' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">Divad Sanders</a>
-              <span class="text-gray-400">in</span>
-              <a href="{% url 'feed' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">The Startup</a>
-            </div>
-            <a href="{% url 'story' %}" class="block">
-              <h3 class="font-bold text-base text-gray-900 leading-snug group-hover:text-gray-600 transition line-clamp-2" style="color: #000000 !important;">
-                4 Boring Startup Ideas Screaming to Be Built (and How to Build Them)
-              </h3>
-            </a>
-            <div class="flex items-center space-x-2 text-xs text-gray-500 pt-0.5" style="color: #6b7280 !important;">
-              <span>Apr 8</span>
-              <span>·</span>
-              <span>5 min read</span>
-              <span class="text-amber-500 text-xs">★</span>
-            </div>
-          </div>
-        </article>
-
-        <article class="flex items-start gap-4 group">
-          <span class="font-bold text-3xl text-gray-200 group-hover:text-gray-400 transition select-none" style="color: #e5e7eb !important;">04</span>
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex items-center space-x-2 text-xs text-gray-700">
-              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=60&h=60&fit=crop" class="w-4 h-4 rounded-full object-cover" alt="Author">
-              <a href="{% url 'profile' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">Sarah Chen</a>
-              <span class="text-gray-400">in</span>
-              <a href="{% url 'feed' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">UX Collective</a>
-            </div>
-            <a href="{% url 'story' %}" class="block">
-              <h3 class="font-bold text-base text-gray-900 leading-snug group-hover:text-gray-600 transition line-clamp-2" style="color: #000000 !important;">
-                How Modern Product Design Lost Its Soul to Conformity
-              </h3>
-            </a>
-            <div class="flex items-center space-x-2 text-xs text-gray-500 pt-0.5" style="color: #6b7280 !important;">
-              <span>May 10</span>
-              <span>·</span>
-              <span>8 min read</span>
-            </div>
-          </div>
-        </article>
-
-        <article class="flex items-start gap-4 group">
-          <span class="font-bold text-3xl text-gray-200 group-hover:text-gray-400 transition select-none" style="color: #e5e7eb !important;">05</span>
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex items-center space-x-2 text-xs text-gray-700">
-              <img src="https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=60&h=60&fit=crop" class="w-4 h-4 rounded-full object-cover" alt="Author">
-              <a href="{% url 'profile' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">David Heinemeier</a>
-            </div>
-            <a href="{% url 'story' %}" class="block">
-              <h3 class="font-bold text-base text-gray-900 leading-snug group-hover:text-gray-600 transition line-clamp-2" style="color: #000000 !important;">
-                Why We Left The Cloud: $3.2M Saved In Hardware Ownership
-              </h3>
-            </a>
-            <div class="flex items-center space-x-2 text-xs text-gray-500 pt-0.5" style="color: #6b7280 !important;">
-              <span>May 6</span>
-              <span>·</span>
-              <span>7 min read</span>
-              <span class="text-amber-500 text-xs">★</span>
-            </div>
-          </div>
-        </article>
-
-        <article class="flex items-start gap-4 group">
-          <span class="font-bold text-3xl text-gray-200 group-hover:text-gray-400 transition select-none" style="color: #e5e7eb !important;">06</span>
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex items-center space-x-2 text-xs text-gray-700">
-              <img src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=60&h=60&fit=crop" class="w-4 h-4 rounded-full object-cover" alt="Author">
-              <a href="{% url 'profile' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">Alex Turner</a>
-              <span class="text-gray-400">in</span>
-              <a href="{% url 'feed' %}" class="font-medium text-gray-900 hover:underline" style="color: #000000 !important;">Level Up Coding</a>
-            </div>
-            <a href="{% url 'story' %}" class="block">
-              <h3 class="font-bold text-base text-gray-900 leading-snug group-hover:text-gray-600 transition line-clamp-2" style="color: #000000 !important;">
-                Django 5.2 in 2026: The Modern Python Backend Renaissance
-              </h3>
-            </a>
-            <div class="flex items-center space-x-2 text-xs text-gray-500 pt-0.5" style="color: #6b7280 !important;">
-              <span>May 11</span>
-              <span>·</span>
-              <span>9 min read</span>
-            </div>
-          </div>
-        </article>
-
+        {% endfor %}
       </div>
     </div>
   </section>
+  {% endif %}
 
+  {% if posts %}
   <section class="discovery-section w-full bg-white py-14" style="background-color: #ffffff !important; color: #242424 !important;">
     <div class="max-w-[1280px] mx-auto px-6 sm:px-12 lg:px-20 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
 
       <div class="lg:col-span-8 space-y-10">
-
-        <article data-clickable-card data-href="{% url 'story' %}" class="border-b border-gray-100 pb-10 flex flex-col sm:flex-row justify-between gap-6 cursor-pointer group">
+        {% for post in posts %}
+        <article data-clickable-card data-href="{% url 'story_detail' slug=post.slug %}" class="border-b border-gray-100 pb-10 flex flex-col sm:flex-row justify-between gap-6 cursor-pointer group">
           <div class="flex-1 min-w-0">
             <div class="flex items-center space-x-2 text-xs text-gray-700 mb-2.5">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&h=60&fit=crop" class="w-5 h-5 rounded-full object-cover" alt="Author">
-              <a href="{% url 'profile' %}" class="font-semibold text-gray-900 hover:underline" style="color: #000000 !important;">Sumit Pandey</a>
-              <span class="text-gray-400">in</span>
-              <span class="font-medium text-gray-900" style="color: #111827 !important;">Towards Deep Learning</span>
-            </div>
-            <a href="{% url 'story' %}" class="block">
-              <h2 class="font-bold text-xl sm:text-2xl text-gray-900 leading-snug group-hover:text-gray-700 transition" style="color: #000000 !important;">
-                Building Production-Grade Retrieval Augmented Generation (RAG) in 2026
-              </h2>
-            </a>
-            <p class="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed" style="color: #4b5563 !important;">
-              Why naïve semantic search fails on complex enterprise data, and how hybrid dense-sparse vector indexing solves accuracy problems.
-            </p>
-            <div class="flex items-center justify-between pt-4 text-xs text-gray-500">
-              <div class="flex items-center space-x-3">
-                <span class="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-[11px] font-medium" style="background-color: #f3f4f6 !important; color: #374151 !important;">Artificial Intelligence</span>
-                <span style="color: #6b7280 !important;">8 min read</span>
-                <span style="color: #6b7280 !important;">·</span>
-                <span style="color: #6b7280 !important;">Selected for you</span>
-              </div>
-              <button type="button" data-action="bookmark" class="p-1 hover:text-black transition" title="Save story" style="color: #6b7280 !important;">
-                <i class="bi bi-bookmark text-base"></i>
-              </button>
-            </div>
-          </div>
-          <div class="shrink-0 w-full sm:w-[160px] h-[105px] overflow-hidden rounded-md bg-gray-100">
-            <img src="{% static 'images/thumb_startup_ideas.png' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="Story Cover">
-          </div>
-        </article>
-
-        <article data-clickable-card data-href="{% url 'story' %}" class="border-b border-gray-100 pb-10 flex flex-col sm:flex-row justify-between gap-6 cursor-pointer group">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center space-x-2 text-xs text-gray-700 mb-2.5">
-              <img src="{% static 'images/divad_avatar_circle.png' %}" class="w-5 h-5 rounded-full object-cover" alt="Author">
-              <a href="{% url 'profile' %}" class="font-semibold text-gray-900 hover:underline" style="color: #000000 !important;">Divad Sanders</a>
+              {% if post.author.get_avatar_url %}
+                <img src="{{ post.author.get_avatar_url }}" class="w-5 h-5 rounded-full object-cover" alt="{{ post.author.get_display_name }}">
+              {% else %}
+                <div class="w-5 h-5 rounded-full bg-neutral-200 flex items-center justify-center text-[10px] font-bold text-neutral-700 uppercase">
+                  {{ post.author.username|slice:":1" }}
+                </div>
+              {% endif %}
+              <a href="{% url 'user_profile' username=post.author.username %}" class="font-semibold text-gray-900 hover:underline" style="color: #000000 !important;">
+                {{ post.author.get_display_name }}
+              </a>
+              {% with first_tag=post.tags.first %}
+                {% if first_tag %}
+                  <span class="text-gray-400">in</span>
+                  <span class="font-medium text-gray-900" style="color: #111827 !important;">{{ first_tag.name }}</span>
+                {% endif %}
+              {% endwith %}
               <span class="text-gray-400">·</span>
-              <span style="color: #6b7280 !important;">Apr 8</span>
+              <span style="color: #6b7280 !important;">{{ post.created|date:"M j" }}</span>
             </div>
-            <a href="{% url 'story' %}" class="block">
+            <a href="{% url 'story_detail' slug=post.slug %}" class="block">
               <h2 class="font-bold text-xl sm:text-2xl text-gray-900 leading-snug group-hover:text-gray-700 transition" style="color: #000000 !important;">
-                The Solo Founder Framework: How We Reached $1M ARR Without Hiring
+                {{ post.title }}
               </h2>
             </a>
+            {% if post.subtitle %}
             <p class="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed" style="color: #4b5563 !important;">
-              Automation, specialized AI coding agents, and high-margin digital products are redefining the modern software enterprise.
+              {{ post.subtitle }}
             </p>
+            {% elif post.plain_text %}
+            <p class="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed" style="color: #4b5563 !important;">
+              {{ post.plain_text|truncatewords:25 }}
+            </p>
+            {% endif %}
             <div class="flex items-center justify-between pt-4 text-xs text-gray-500">
               <div class="flex items-center space-x-3">
-                <span class="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-[11px] font-medium" style="background-color: #f3f4f6 !important; color: #374151 !important;">Startups</span>
-                <span style="color: #6b7280 !important;">5 min read</span>
-                <span class="text-amber-500">★</span>
+                {% with first_tag=post.tags.first %}
+                  {% if first_tag %}
+                    <a href="{% url 'search' %}?topic={{ first_tag.name|urlencode }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1 rounded-full text-[11px] font-medium transition" style="background-color: #f3f4f6 !important; color: #374151 !important;">
+                      {{ first_tag.name }}
+                    </a>
+                  {% endif %}
+                {% endwith %}
+                <span style="color: #6b7280 !important;">{{ post.read_time }} min read</span>
               </div>
-              <button type="button" data-action="bookmark" class="p-1 hover:text-black transition" title="Save story" style="color: #6b7280 !important;">
+              <button type="button" data-action="bookmark" data-post-id="{{ post.id }}" class="p-1 hover:text-black transition" title="Save story" style="color: #6b7280 !important;">
                 <i class="bi bi-bookmark text-base"></i>
               </button>
             </div>
           </div>
+          {% if post.get_cover %}
           <div class="shrink-0 w-full sm:w-[160px] h-[105px] overflow-hidden rounded-md bg-gray-100">
-            <img src="{% static 'images/thumb_mrbeast.png' %}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="Story Cover">
+            <img src="{{ post.get_cover }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="{{ post.title }}">
           </div>
+          {% endif %}
         </article>
-
-        <article data-clickable-card data-href="{% url 'story' %}" class="border-b border-gray-100 pb-10 flex flex-col sm:flex-row justify-between gap-6 cursor-pointer group">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center space-x-2 text-xs text-gray-700 mb-2.5">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop" class="w-5 h-5 rounded-full object-cover" alt="Author">
-              <a href="{% url 'profile' %}" class="font-semibold text-gray-900 hover:underline" style="color: #000000 !important;">Michal Malewicz</a>
-              <span class="text-gray-400">·</span>
-              <span style="color: #6b7280 !important;">May 8</span>
-            </div>
-            <a href="{% url 'story' %}" class="block">
-              <h2 class="font-bold text-xl sm:text-2xl text-gray-900 leading-snug group-hover:text-gray-700 transition" style="color: #000000 !important;">
-                Clean Code is Overrated: Why Readability Trumps Theoretical Perfection
-              </h2>
-            </a>
-            <p class="text-sm text-gray-600 mt-2 line-clamp-2 leading-relaxed" style="color: #4b5563 !important;">
-              Junior engineers spend hours abstracting code into intricate design patterns that future developers will inevitably throw away.
-            </p>
-            <div class="flex items-center justify-between pt-4 text-xs text-gray-500">
-              <div class="flex items-center space-x-3">
-                <span class="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-[11px] font-medium" style="background-color: #f3f4f6 !important; color: #374151 !important;">Programming</span>
-                <span style="color: #6b7280 !important;">6 min read</span>
-              </div>
-              <button type="button" data-action="bookmark" class="p-1 hover:text-black transition" title="Save story" style="color: #6b7280 !important;">
-                <i class="bi bi-bookmark text-base"></i>
-              </button>
-            </div>
-          </div>
-          <div class="shrink-0 w-full sm:w-[160px] h-[105px] overflow-hidden rounded-md bg-gray-100">
-            <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=400&h=260&fit=crop" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="Story Cover">
-          </div>
-        </article>
-
+        {% endfor %}
       </div>
 
       <aside class="lg:col-span-4 space-y-8 sticky top-28 self-start">
+        {% if popular_tags %}
         <div>
           <h4 class="font-bold text-sm text-gray-900 mb-4" style="color: #000000 !important;">Discover more of what matters to you</h4>
           <div class="flex flex-wrap gap-2">
-            <a href="{% url 'feed' %}" class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-800 transition" style="background-color: #f3f4f6 !important; color: #1f2937 !important;">Programming</a>
-            <a href="{% url 'feed' %}" class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-800 transition" style="background-color: #f3f4f6 !important; color: #1f2937 !important;">Data Science</a>
-            <a href="{% url 'feed' %}" class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-800 transition" style="background-color: #f3f4f6 !important; color: #1f2937 !important;">Technology</a>
-            <a href="{% url 'feed' %}" class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-800 transition" style="background-color: #f3f4f6 !important; color: #1f2937 !important;">Self Improvement</a>
-            <a href="{% url 'feed' %}" class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-800 transition" style="background-color: #f3f4f6 !important; color: #1f2937 !important;">Writing</a>
-            <a href="{% url 'feed' %}" class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-800 transition" style="background-color: #f3f4f6 !important; color: #1f2937 !important;">Machine Learning</a>
-            <a href="{% url 'feed' %}" class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-800 transition" style="background-color: #f3f4f6 !important; color: #1f2937 !important;">Productivity</a>
-            <a href="{% url 'feed' %}" class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-800 transition" style="background-color: #f3f4f6 !important; color: #1f2937 !important;">Politics</a>
+            {% for tag in popular_tags %}
+            <a href="{% url 'search' %}?topic={{ tag.name|urlencode }}" class="px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-medium text-gray-800 transition" style="background-color: #f3f4f6 !important; color: #1f2937 !important;">
+              {{ tag.name }}
+            </a>
+            {% endfor %}
           </div>
-          <a href="{% url 'feed' %}" class="text-medium-green text-xs font-medium hover:underline block mt-4" style="color: #1a8917 !important;">See more topics</a>
+          <a href="{% url 'search' %}" class="text-medium-green text-xs font-medium hover:underline block mt-4" style="color: #1a8917 !important;">See more topics</a>
         </div>
+        {% endif %}
 
         <div class="border-t border-gray-100 pt-6 text-xs text-gray-500 space-y-3" style="border-color: #e5e7eb !important;">
           <div class="flex flex-wrap gap-x-4 gap-y-2 text-gray-500" style="color: #6b7280 !important;">
@@ -348,7 +218,9 @@
 
     </div>
   </section>
+  {% endif %}
 
+  {% if trending_posts or posts %}
   <footer class="w-full border-t border-black/80 py-6 px-4 bg-[#F7F4ED]" style="background-color: #F7F4ED !important; border-top: 1px solid rgba(0,0,0,0.8) !important;">
     <div class="max-w-[1280px] mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-xs text-gray-700">
       <a href="#" data-coming-soon="Help Center" class="hover:text-black hover:underline transition" style="color: #4b5563 !important;">Help</a>
@@ -365,5 +237,6 @@
       <a href="#" data-coming-soon="Muhfil for Teams" class="hover:text-black hover:underline transition" style="color: #4b5563 !important;">Teams</a>
     </div>
   </footer>
+  {% endif %}
 
 {% endblock layout %}

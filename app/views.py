@@ -22,12 +22,17 @@ def index(request):
         status='published'
     ).select_related('author').prefetch_related('tags', 'claps')[:6]
 
+    posts = Post.objects.filter(
+        status='published'
+    ).select_related('author').prefetch_related('tags', 'claps', 'comments').order_by('-created')[:15]
+
     popular_tags = Tag.objects.annotate(
-        post_count=Count('posts')
-    ).order_by('-post_count')[:8]
+        post_count=Count('posts', filter=Q(posts__status='published'))
+    ).filter(post_count__gt=0).order_by('-post_count')[:8]
 
     ctx = {
         'trending_posts': trending_posts,
+        'posts': posts,
         'popular_tags': popular_tags,
     }
     return render(request, 'index.html', ctx)

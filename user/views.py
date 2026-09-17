@@ -421,7 +421,7 @@ def google_auth_view(request):
             msg = 'Ushbu hisob bloklangan.'
             if request.content_type == 'application/json':
                 return JsonResponse({'success': False, 'error': msg}, status=403)
-            return render(request, 'google_auth.html', {'error': msg}, status=403)
+            return redirect(f'/login/?error={urllib.parse.quote(msg)}')
 
         auth_rate_limiter.reset_attempts(request, email)
         auth_login(request, user)
@@ -430,8 +430,15 @@ def google_auth_view(request):
             return JsonResponse({'success': True, 'redirect_url': '/feed/'})
         return redirect('feed')
 
-    # GET so'rovda sahifa ochiladi
+    # GET so'rovda to'g'ridan-to'g'ri rasmiy Google OAuth sahifasiga yo'naltiriladi
+    if not getattr(settings, 'GOOGLE_CLIENT_ID', None):
+        return redirect('/login/?error=' + urllib.parse.quote('Google OAuth sozlanmagan. Iltimos, email orqali kiring.'))
+
     redirect_uri = request.build_absolute_uri(reverse('google_auth_callback'))
+    if not request.is_secure() and not request.get_host().startswith(('localhost', '127.0.0.1')):
+        if redirect_uri.startswith('http://'):
+            redirect_uri = 'https://' + redirect_uri[7:]
+
     scope = "openid email profile"
     google_oauth_url = (
         "https://accounts.google.com/o/oauth2/v2/auth?"
@@ -442,10 +449,7 @@ def google_auth_view(request):
         "access_type=offline&"
         "prompt=select_account"
     )
-    return render(request, 'google_auth.html', {
-        'google_oauth_url': google_oauth_url,
-        'GOOGLE_CLIENT_ID': settings.GOOGLE_CLIENT_ID
-    })
+    return redirect(google_oauth_url)
 
 
 def google_auth_callback_view(request):
@@ -462,6 +466,9 @@ def google_auth_callback_view(request):
         return redirect('/login/?error=' + urllib.parse.quote('Google avtorizatsiya kodi topilmadi'))
 
     redirect_uri = request.build_absolute_uri(reverse('google_auth_callback'))
+    if not request.is_secure() and not request.get_host().startswith(('localhost', '127.0.0.1')):
+        if redirect_uri.startswith('http://'):
+            redirect_uri = 'https://' + redirect_uri[7:]
 
     # Google token endpointiga so'rov yuborish
     token_url = "https://oauth2.googleapis.com/token"
