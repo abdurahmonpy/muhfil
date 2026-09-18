@@ -86,11 +86,31 @@ def feed(request):
 
 def story(request, slug=None):
     if slug:
-        post = get_object_or_404(
-            Post.objects.select_related('author').prefetch_related('tags'),
+        post = Post.objects.select_related('author').prefetch_related('tags').filter(
             slug=slug,
             status='published'
-        )
+        ).first()
+
+        if not post:
+            try:
+                import uuid
+                post_uuid = uuid.UUID(slug)
+                post = Post.objects.select_related('author').prefetch_related('tags').filter(
+                    id=post_uuid,
+                    status='published'
+                ).first()
+            except (ValueError, AttributeError):
+                pass
+
+        if not post and request.user.is_authenticated:
+            post = Post.objects.select_related('author').prefetch_related('tags').filter(
+                slug=slug,
+                author=request.user
+            ).first()
+
+        if not post:
+            from django.http import Http404
+            raise Http404("Story not found")
     else:
         # Fallback to the latest published story if no slug is given
         post = Post.objects.filter(
@@ -149,6 +169,12 @@ def write(request):
     edit_post = None
     if edit_slug:
         edit_post = Post.objects.filter(slug=edit_slug, author=request.user).first()
+        if not edit_post:
+            try:
+                import uuid
+                edit_post = Post.objects.filter(id=uuid.UUID(edit_slug), author=request.user).first()
+            except (ValueError, AttributeError):
+                pass
     return render(request, 'write.html', {'edit_post': edit_post})
 
 

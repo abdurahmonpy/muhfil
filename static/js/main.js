@@ -1174,12 +1174,28 @@ function initShareActions() {
   document.querySelectorAll('[data-action="copy-link"]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      const url = btn.getAttribute('data-url') || window.location.href;
-      navigator.clipboard.writeText(url).then(() => {
-        showToast('Story link copied to clipboard');
-      }).catch(() => {
-        showToast('Copied link: ' + url);
-      });
+      e.stopPropagation();
+      const rawUrl = btn.getAttribute('data-url') || window.location.href;
+      let fullUrl = rawUrl;
+      try {
+        fullUrl = new URL(rawUrl, window.location.origin).href;
+      } catch (err) {
+        fullUrl = window.location.origin + (rawUrl.startsWith('/') ? rawUrl : '/' + rawUrl);
+      }
+
+      const notifySuccess = () => {
+        if (window.showToast) {
+          window.showToast('Full link copied to clipboard');
+        }
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fullUrl).then(notifySuccess).catch(() => {
+          fallbackCopyText(fullUrl, notifySuccess);
+        });
+      } else {
+        fallbackCopyText(fullUrl, notifySuccess);
+      }
     });
   });
 
@@ -1191,13 +1207,35 @@ function initShareActions() {
     const container = copyBtn.closest('.carbon-code-window') || copyBtn.closest('pre');
     const codeEl = container ? (container.querySelector('code') || container) : null;
     if (codeEl) {
-      navigator.clipboard.writeText(codeEl.innerText.trim()).then(() => {
-        showToast('Code copied to clipboard');
-      }).catch(() => {
-        showToast('Code copied');
-      });
+      const codeText = codeEl.innerText.trim();
+      const onCodeCopied = () => {
+        if (window.showToast) window.showToast('Code copied to clipboard');
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(codeText).then(onCodeCopied).catch(() => {
+          fallbackCopyText(codeText, onCodeCopied);
+        });
+      } else {
+        fallbackCopyText(codeText, onCodeCopied);
+      }
     }
   });
+}
+
+function fallbackCopyText(text, cb) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-9999px';
+  textArea.style.top = '0';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  try {
+    document.execCommand('copy');
+    if (cb) cb();
+  } catch (err) {}
+  document.body.removeChild(textArea);
 }
 
 /* ==========================================================================

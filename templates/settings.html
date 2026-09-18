@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}Settings{% endblock %}
@@ -83,7 +83,7 @@
                 <span class="text-gray-400 select-none">muhfil.uz/@</span>
                 <span class="font-semibold">{{ user.username }}</span>
               </div>
-              <button type="button" data-action="copy-link" class="p-2 rounded-xl text-gray-500 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#222] transition" title="Copy profile URL">
+              <button type="button" data-action="copy-link" data-url="{{ request.scheme }}://{{ request.get_host }}{% url 'user_profile' username=user.username %}" class="p-2 rounded-xl text-gray-500 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#222] transition" title="Copy profile URL">
                 <i class="bi bi-copy text-sm"></i>
               </button>
             </div>

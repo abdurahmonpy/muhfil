@@ -79,7 +79,7 @@
                           <i class="bi bi-three-dots text-base"></i>
                         </button>
                         <div id="feed-story-{{ forloop.counter }}" class="dropdown-menu absolute right-0 bottom-full mb-2 w-44 rounded-xl bg-white dark:bg-[#202020] border border-gray-200 dark:border-[#333] shadow-xl py-1 hidden z-50 text-xs">
-                          <button type="button" data-action="copy-link" data-url="{% url 'story_detail' slug=story.slug %}" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#282828] flex items-center space-x-2">
+                          <button type="button" data-action="copy-link" data-url="{{ request.scheme }}://{{ request.get_host }}{% url 'story_detail' slug=story.slug %}" class="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#282828] flex items-center space-x-2">
                             <i class="bi bi-link-45deg text-base"></i>
                             <span>Copy link</span>
                           </button>

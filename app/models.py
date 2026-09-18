@@ -1,8 +1,35 @@
 import uuid
 import re
+import string
+import secrets
 from django.db import models
 from django.conf import settings
 from django.utils.text import slugify
+
+
+BASE62_ALPHABET = string.digits + string.ascii_letters
+
+
+def generate_youtube_style_slug(post_id=None):
+    """
+    Generates an 11-character YouTube-style alphanumeric video ID from a UUID.
+    Example output: 'dQw4w9WgXcQ', 'ez0nSncTCdQ', '6EYB5fQQ72F'
+    """
+    if not post_id:
+        post_id = uuid.uuid4()
+    elif isinstance(post_id, str):
+        try:
+            post_id = uuid.UUID(post_id)
+        except Exception:
+            post_id = uuid.uuid4()
+
+    num = int.from_bytes(post_id.bytes[:8], 'big')
+    chars = []
+    while num:
+        num, rem = divmod(num, 62)
+        chars.append(BASE62_ALPHABET[rem])
+
+    return ''.join(reversed(chars)).zfill(11)
 
 
 class Tag(models.Model):
@@ -80,17 +107,14 @@ class Post(models.Model):
         return 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&h=500&fit=crop'
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            base_slug = slugify(self.title) or f"story-{self.id.hex[:8]}"
-            slug = base_slug
-            counter = 1
-            while Post.objects.filter(slug=slug).exclude(pk=self.pk).exists():
-                slug = f"{base_slug}-{counter}"
-                counter += 1
-            self.slug = slug
+        if not self.slug or len(self.slug) != 11 or not self.slug.isalnum():
+            code = generate_youtube_style_slug(self.id)
+            while Post.objects.filter(slug=code).exclude(pk=self.pk).exists():
+                code = ''.join(secrets.choice(BASE62_ALPHABET) for _ in range(11))
+            self.slug = code
 
         # Calculate read time based on word count
-        raw_content = self.plain_text or re.sub(r'<[^>]+>', ' ', self.text)
+        raw_content = self.plain_text or re.sub(r'<[^>]+>', ' ', self.text or '')
         words = len(raw_content.split())
         self.read_time = max(1, (words + 199) // 200)
 

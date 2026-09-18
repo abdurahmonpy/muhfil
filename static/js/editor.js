@@ -485,9 +485,8 @@ function initFormattingToolbar() {
     }
 
     toolbar.classList.remove('hidden');
-    // Position toolbar centered directly above the selection
     const topPos = Math.max(10, window.scrollY + rect.top - toolbar.offsetHeight - 12);
-    const leftPos = Math.max(10, window.scrollX + rect.left + rect.width / 2 - toolbar.offsetWidth / 2);
+    const leftPos = Math.max(8, Math.min(window.innerWidth - toolbar.offsetWidth - 8, window.scrollX + rect.left + rect.width / 2 - toolbar.offsetWidth / 2));
 
     toolbar.style.top = `${topPos}px`;
     toolbar.style.left = `${leftPos}px`;
