@@ -27,7 +27,7 @@
                 <i class="bi bi-three-dots text-xl"></i>
               </button>
               <div id="profile-more-menu" class="dropdown-menu hidden absolute right-0 mt-1 w-48 rounded-xl bg-white dark:bg-[#1e1e1e] shadow-xl border border-gray-100 dark:border-[#333] py-2 z-30 text-xs text-gray-700 dark:text-gray-300">
-                <button type="button" data-action="copy-link" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#282828] flex items-center space-x-2">
+                <button type="button" data-action="copy-link" data-url="{{ request.scheme }}://{{ request.get_host }}{% url 'user_profile' username=profile_user.username %}" class="w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-[#282828] flex items-center space-x-2">
                   <i class="bi bi-link-45deg text-sm"></i>
                   <span>Copy link to profile</span>
                 </button>

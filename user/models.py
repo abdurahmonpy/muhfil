@@ -41,5 +41,9 @@ class User(AbstractUser):
     def following_count(self):
         return self.following.count()
 
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('user_profile', kwargs={'username': self.username})
+
     def __str__(self):
         return self.username

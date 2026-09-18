@@ -529,13 +529,12 @@ def add_to_list_api(request, list_id, post_id):
 
 
 def profile(request, username=None):
-    if username:
-        profile_user = get_object_or_404(User, username=username)
-    elif request.user.is_authenticated:
-        profile_user = request.user
-    else:
+    if not username:
+        if request.user.is_authenticated:
+            return redirect('user_profile', username=request.user.username)
         return redirect('index')
 
+    profile_user = get_object_or_404(User, username=username)
     is_own_profile = (request.user == profile_user)
 
     published_posts = profile_user.posts.filter(

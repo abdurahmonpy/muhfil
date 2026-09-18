@@ -55,12 +55,12 @@
             <i class="bi bi-bookmarks-fill text-xl nav-icon-active hidden"></i>
             <span class="nav-label">Library</span>
           </a>
-          <a href="{% url 'profile' %}" class="medium-nav-item" data-nav-link="profile">
+          <a href="{% if request.user.is_authenticated %}{% url 'user_profile' username=request.user.username %}{% else %}{% url 'profile' %}{% endif %}" class="medium-nav-item" data-nav-link="profile">
             <i class="bi bi-person text-xl nav-icon-inactive"></i>
             <i class="bi bi-person-fill text-xl nav-icon-active hidden"></i>
             <span class="nav-label">Profile</span>
           </a>
-          <a href="{% url 'profile' %}#stories" class="medium-nav-item" data-nav-link="stories">
+          <a href="{% if request.user.is_authenticated %}{% url 'user_profile' username=request.user.username %}#stories{% else %}{% url 'profile' %}#stories{% endif %}" class="medium-nav-item" data-nav-link="stories">
             <i class="bi bi-journal-text text-xl"></i>
             <span class="nav-label">Stories</span>
           </a>
@@ -190,7 +190,7 @@
                   <p class="text-xs text-gray-500">{% if request.user.username %}@{{ request.user.username }}{% else %}Not signed in{% endif %}</p>
                 </div>
                 <div class="py-1">
-                  <a href="{% url 'profile' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#252525]"><i class="bi bi-person text-base"></i><span>Profile</span></a>
+                  <a href="{% if request.user.is_authenticated %}{% url 'user_profile' username=request.user.username %}{% else %}{% url 'profile' %}{% endif %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#252525]"><i class="bi bi-person text-base"></i><span>Profile</span></a>
                   <a href="{% url 'lists' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#252525]"><i class="bi bi-bookmarks text-base"></i><span>Library</span></a>
                   <a href="{% url 'stats' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#252525]"><i class="bi bi-bar-chart-line text-base"></i><span>Stats</span></a>
                   <a href="{% url 'settings' %}" class="flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-[#252525]"><i class="bi bi-gear text-base"></i><span>Settings</span></a>
@@ -219,70 +219,7 @@
   </div>
 
   <!-- Floating Liquid Glass Mobile Navigation Bar (Telegram / iOS Style) -->
-  <nav id="mobile-liquid-dock" class="lg:hidden fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-[420px] select-none" aria-label="Mobile Navigation">
-    <div class="liquid-glass-dock flex items-center justify-around px-2 py-1.5 sm:px-3 sm:py-2">
-      
-      <!-- 1. Home -->
-      <a href="{% url 'feed' %}" class="liquid-dock-item" data-nav-link="home">
-        <div class="dock-icon-wrapper relative flex items-center justify-center">
-          <i class="bi bi-house-door text-xl nav-icon-inactive"></i>
-          <i class="bi bi-house-door-fill text-xl nav-icon-active hidden"></i>
-        </div>
-        <span class="dock-label">Home</span>
-      </a>
-
-      <!-- 2. Library -->
-      <a href="{% url 'lists' %}" class="liquid-dock-item" data-nav-link="library">
-        <div class="dock-icon-wrapper relative flex items-center justify-center">
-          <i class="bi bi-bookmarks text-xl nav-icon-inactive"></i>
-          <i class="bi bi-bookmarks-fill text-xl nav-icon-active hidden"></i>
-        </div>
-        <span class="dock-label">Library</span>
-      </a>
-
-      <!-- 3. Write -->
-      <a href="{% url 'write' %}" class="liquid-dock-item" data-nav-link="write">
-        <div class="dock-icon-wrapper relative flex items-center justify-center">
-          <i class="bi bi-pencil-square text-xl nav-icon-inactive"></i>
-          <i class="bi bi-pencil-square text-xl nav-icon-active hidden"></i>
-        </div>
-        <span class="dock-label">Write</span>
-      </a>
-
-      <!-- 4. Activity / Notifications -->
-      <a href="{% url 'notifications' %}" class="liquid-dock-item" data-nav-link="notifications">
-        <div class="dock-icon-wrapper relative flex items-center justify-center">
-          <i class="bi bi-bell text-xl nav-icon-inactive"></i>
-          <i class="bi bi-bell-fill text-xl nav-icon-active hidden"></i>
-          {% if unread_notifications_count %}
-          <span class="telegram-badge">{{ unread_notifications_count }}</span>
-          {% endif %}
-        </div>
-        <span class="dock-label">Activity</span>
-      </a>
-
-      <!-- 5. Profile (with round photo) -->
-      <a href="{% if request.user.is_authenticated %}{% url 'profile' %}{% else %}#{% endif %}" 
-         class="liquid-dock-item" 
-         data-nav-link="profile"
-         {% if not request.user.is_authenticated %}data-auth-modal="signin"{% endif %}>
-        <div class="dock-icon-wrapper relative flex items-center justify-center">
-          {% if request.user.is_authenticated and request.user.profile.avatar %}
-            <img src="{{ request.user.profile.avatar.url }}" class="w-6 h-6 rounded-full object-cover ring-1.5 ring-black/20 dark:ring-white/30" alt="{{ request.user.username }}">
-          {% elif request.user.is_authenticated %}
-            <div class="w-6 h-6 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center text-[10px] font-bold">
-              {{ request.user.username|first|upper }}
-            </div>
-          {% else %}
-            <i class="bi bi-person text-xl nav-icon-inactive"></i>
-            <i class="bi bi-person-fill text-xl nav-icon-active hidden"></i>
-          {% endif %}
-        </div>
-        <span class="dock-label">Profile</span>
-      </a>
-
-    </div>
-  </nav>
+  {% include "mobile_dock.html" %}
 
   {% block responses_drawer %}
   <div id="responses-backdrop" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] hidden transition-opacity"></div>

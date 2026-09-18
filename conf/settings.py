@@ -80,16 +80,56 @@ LOGOUT_REDIRECT_URL = 'index'
 WSGI_APPLICATION = 'conf.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.1/ref/settings/#databases
+# Database & Persistent Storage (Railway Volume Support)
 import dj_database_url
+import shutil
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATA_VOLUME_DIR = None
+env_mount = os.environ.get('RAILWAY_VOLUME_MOUNT_PATH') or os.environ.get('DATA_DIR')
+if env_mount:
+    try:
+        p = Path(env_mount)
+        if p.exists() or p.is_absolute():
+            DATA_VOLUME_DIR = p
+    except Exception:
+        pass
+
+if not DATA_VOLUME_DIR and os.path.exists('/data') and os.path.isdir('/data'):
+    DATA_VOLUME_DIR = Path('/data')
+
+if DATA_VOLUME_DIR:
+    try:
+        DATA_VOLUME_DIR.mkdir(parents=True, exist_ok=True)
+        sqlite_file = DATA_VOLUME_DIR / 'db.sqlite3'
+        # Seed initial database from repository if volume is freshly mounted and empty
+        base_db = BASE_DIR / 'db.sqlite3'
+        if not sqlite_file.exists() and base_db.exists():
+            shutil.copy2(base_db, sqlite_file)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': sqlite_file,
+            }
+        }
+        MEDIA_ROOT = DATA_VOLUME_DIR / 'media'
+    except Exception:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+        MEDIA_ROOT = BASE_DIR / 'media'
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+    MEDIA_ROOT = BASE_DIR / 'media'
+
+MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
@@ -135,7 +175,6 @@ STATIC_ROOT.mkdir(parents=True, exist_ok=True)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
 MAILERS = {
     'default': {
