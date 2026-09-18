@@ -31,9 +31,9 @@
 
   {% block layout %}
   <div class="medium-app-layout">
-    <aside id="left-sidebar" class="fixed lg:sticky top-0 left-0 h-screen w-[240px] shrink-0 border-r border-gray-100 dark:border-[#242424] bg-white dark:bg-[#121212] flex flex-col justify-between p-5 z-40 transition-all duration-200 -translate-x-full lg:translate-x-0 overflow-y-auto overflow-x-hidden">
-      <div class="space-y-6">
-        <div class="sidebar-top-header flex items-center space-x-3 pt-1">
+    <aside id="left-sidebar" class="fixed lg:sticky top-0 left-0 h-screen w-[240px] shrink-0 border-r border-gray-100 dark:border-[#242424] bg-white dark:bg-[#121212] flex flex-col justify-between p-4 z-40 transition-all duration-200 -translate-x-full lg:translate-x-0 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div class="space-y-4">
+        <div class="sidebar-top-header flex items-center space-x-3 pt-0.5">
           <button type="button" id="sidebar-toggle-btn" class="sidebar-toggle-btn p-1 -ml-1 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white shrink-0" title="Toggle Navigation">
             <i class="bi bi-list text-2xl"></i>
           </button>
@@ -44,7 +44,7 @@
           </a>
         </div>
 
-        <nav class="space-y-1">
+        <nav class="space-y-0.5">
           <a href="{% url 'index' %}" class="medium-nav-item" data-nav-link="home">
             <i class="bi bi-house-door text-xl nav-icon-inactive"></i>
             <i class="bi bi-house-door-fill text-xl nav-icon-active hidden"></i>
@@ -73,20 +73,20 @@
 
         <div class="border-t border-gray-100 dark:border-[#242424]"></div>
 
-        <div class="following-section space-y-4">
-          <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Following</p>
-          <div class="space-y-3">
+        <div class="following-section space-y-2.5">
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Following</p>
+          <div class="space-y-2">
             {% if request.user.is_authenticated %}
             {% for followed_user in request.user.following.all|slice:":5" %}
-            <a href="{% url 'user_profile' username=followed_user.username %}" class="flex items-center space-x-3 text-sm text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white group">
+            <a href="{% url 'user_profile' username=followed_user.username %}" class="flex items-center space-x-2.5 text-sm text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white group">
               {% if followed_user.profile.avatar %}
-              <img src="{{ followed_user.profile.avatar.url }}" class="w-6 h-6 rounded-full object-cover shrink-0" alt="{{ followed_user.username }}">
+              <img src="{{ followed_user.profile.avatar.url }}" class="w-5 h-5 rounded-full object-cover shrink-0" alt="{{ followed_user.username }}">
               {% else %}
-              <div class="w-6 h-6 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-serif text-xs font-bold shrink-0">
+              <div class="w-5 h-5 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-serif text-[10px] font-bold shrink-0">
                 {{ followed_user.username|first|upper }}
               </div>
               {% endif %}
-              <span class="font-medium group-hover:underline truncate">{{ followed_user.get_full_name|default:followed_user.username }}</span>
+              <span class="font-medium group-hover:underline truncate text-sm">{{ followed_user.get_full_name|default:followed_user.username }}</span>
             </a>
             {% empty %}
             <p class="text-xs text-gray-400 italic">Not following anyone yet.</p>
@@ -95,17 +95,17 @@
             <p class="text-xs text-gray-400 italic">Sign in to see who you follow.</p>
             {% endif %}
           </div>
-          <div class="pt-2 flex items-start space-x-2 text-xs text-gray-500 dark:text-gray-400">
+          <div class="pt-1 flex items-start space-x-2 text-xs text-gray-500 dark:text-gray-400">
             <i class="bi bi-plus-lg text-sm text-gray-500 mt-0.5 shrink-0"></i>
-            <p class="leading-relaxed">
-              Find writers and publications to follow.
+            <p class="leading-snug">
+              Find writers to follow.
               <a href="{% url 'search' %}" class="text-medium-green hover:underline block mt-0.5 font-medium">See suggestions</a>
             </p>
           </div>
         </div>
       </div>
 
-      <div class="pt-6 border-t border-gray-100 dark:border-[#242424] space-y-2">
+      <div class="pt-3 border-t border-gray-100 dark:border-[#242424] space-y-1">
         <a href="{% url 'write' %}" class="medium-nav-item text-xs text-gray-500 hover:text-black dark:hover:text-white" data-nav-link="write">
           <i class="bi bi-pencil-square text-base"></i>
           <span class="nav-label">Write a story</span>
