@@ -1,4 +1,5 @@
 import json
+import re
 import urllib.request
 import urllib.parse
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.utils.text import slugify
 
 from .models import User
@@ -324,6 +326,59 @@ def change_password_view(request):
     return JsonResponse({'success': True, 'message': 'Password updated successfully!'})
 
 
+def save_google_avatar(user, picture_url):
+    """Foydalanuvchining Google hisobidagi profil rasmini yuklab olib profiliga saqlash."""
+    if not user or not picture_url:
+        return
+
+    should_download = False
+    if not user.avatar:
+        should_download = True
+    else:
+        try:
+            if not user.avatar.storage.exists(user.avatar.name):
+                should_download = True
+            elif '_google.' in user.avatar.name:
+                should_download = True
+        except Exception:
+            should_download = True
+
+    if not should_download:
+        return
+
+    # Sifatliroq (256x256) rasm hajmini olish (Google avatar URL lari uchun)
+    high_res_url = re.sub(r'=s\d+(-c)?$', '=s256-c', picture_url)
+
+    try:
+        req = urllib.request.Request(
+            high_res_url,
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            if resp.status == 200:
+                content_type = resp.headers.get('Content-Type', '')
+                ext = 'jpg'
+                if 'png' in content_type:
+                    ext = 'png'
+                elif 'webp' in content_type:
+                    ext = 'webp'
+
+                img_data = resp.read()
+                if img_data:
+                    # Agar avvalgi Google avatar fayli mavjud bo'lsa uni o'chiramiz
+                    if user.avatar and user.avatar.name:
+                        try:
+                            if user.avatar.storage.exists(user.avatar.name):
+                                user.avatar.storage.delete(user.avatar.name)
+                        except Exception:
+                            pass
+                    file_name = f"{user.username}_google.{ext}"
+                    user.avatar.save(file_name, ContentFile(img_data), save=True)
+    except Exception:
+        # Google avatar yuklanmasa ham autentifikatsiya muvaffaqiyatli davom etishi kerak
+        pass
+
+
 def google_auth_view(request):
     if request.user.is_authenticated:
         return redirect('feed')
@@ -344,18 +399,21 @@ def google_auth_view(request):
         return redirect(google_oauth_url)
 
     if request.method == 'POST':
+        picture = ''
         if request.content_type == 'application/json':
             try:
                 data = json.loads(request.body)
                 email = data.get('email', '').strip().lower()
                 name = data.get('name', '').strip()
                 credential = data.get('credential', '').strip()
+                picture = data.get('picture', '').strip()
             except Exception:
                 return JsonResponse({'success': False, 'error': 'Noto\'g\'ri JSON formati'}, status=400)
         else:
             email = request.POST.get('email', '').strip().lower()
             name = request.POST.get('name', '').strip()
             credential = request.POST.get('credential', '').strip()
+            picture = request.POST.get('picture', '').strip()
 
         # Agar Google One Tap / GSI token yuborilgan bo'lsa
         if credential:
@@ -370,6 +428,8 @@ def google_auth_view(request):
 
                 email = id_info.get('email', '').strip().lower()
                 name = id_info.get('name', '').strip()
+                if id_info.get('picture'):
+                    picture = id_info.get('picture', '').strip()
             except Exception as e:
                 return JsonResponse({'success': False, 'error': f'Google token tasdiqlanmadi: {str(e)}'}, status=400)
 
@@ -415,6 +475,12 @@ def google_auth_view(request):
                 name="Reading list",
                 defaults={'description': 'Default private reading list', 'is_private': True}
             )
+        elif not user.first_name and clean_name:
+            user.first_name = clean_name
+            user.save(update_fields=['first_name'])
+
+        if picture:
+            save_google_avatar(user, picture)
 
         if not user.is_active:
             auth_rate_limiter.record_failure(request, email)
@@ -508,6 +574,7 @@ def google_auth_callback_view(request):
 
         first_name = userinfo.get('given_name') or userinfo.get('name') or email.split('@')[0].capitalize()
         last_name = userinfo.get('family_name') or ''
+        picture = userinfo.get('picture', '').strip()
 
         user = User.objects.filter(email__iexact=email).first()
         if not user:
@@ -532,6 +599,19 @@ def google_auth_callback_view(request):
                 name="Reading list",
                 defaults={'description': 'Default private reading list', 'is_private': True}
             )
+        else:
+            update_fields = []
+            if not user.first_name and first_name:
+                user.first_name = first_name
+                update_fields.append('first_name')
+            if not user.last_name and last_name:
+                user.last_name = last_name
+                update_fields.append('last_name')
+            if update_fields:
+                user.save(update_fields=update_fields)
+
+        if picture:
+            save_google_avatar(user, picture)
 
         if not user.is_active:
             return redirect('/login/?error=' + urllib.parse.quote('Ushbu hisob bloklangan'))

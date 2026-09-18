@@ -32,8 +32,12 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
         </svg>
       </button>
-      <a href="{% if request.user.is_authenticated %}{% url 'user_profile' username=request.user.username %}{% else %}{% url 'profile' %}{% endif %}" class="w-8 h-8 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs font-bold flex items-center justify-center transition hover:opacity-85 shadow-sm" title="Your profile">
-        {{ request.user.username|default:"A"|first|upper }}
+      <a href="{% if request.user.is_authenticated %}{% url 'user_profile' username=request.user.username %}{% else %}{% url 'profile' %}{% endif %}" class="w-8 h-8 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs font-bold flex items-center justify-center transition hover:opacity-85 shadow-sm overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700" title="Your profile">
+        {% if request.user.is_authenticated and request.user.profile.avatar %}
+          <img src="{{ request.user.profile.avatar.url }}" class="w-full h-full object-cover" alt="{{ request.user.username }}">
+        {% else %}
+          {{ request.user.username|default:"A"|first|upper }}
+        {% endif %}
       </a>
     </div>
   </header>
