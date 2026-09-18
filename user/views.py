@@ -1,5 +1,6 @@
 import json
 import re
+import random
 import urllib.request
 import urllib.parse
 from django.conf import settings
@@ -12,11 +13,138 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.core.mail import send_mail
+from django.core.cache import cache
 from django.utils.text import slugify
 
 from .models import User
 from app.models import Notification, StoryList
 from conf.security import auth_rate_limiter, timing_safe_fake_check, sanitize_plain_text
+
+
+@require_POST
+def send_otp_api(request):
+    """
+    Ro'yxatdan o'tish uchun emailga 6 xonali tasdiqlash kodi (OTP) yuborish.
+    """
+    if request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Siz allaqachon tizimga kirgansiz'}, status=400)
+
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            email = data.get('email', '').strip().lower()
+        else:
+            email = request.POST.get('email', '').strip().lower()
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'Noto\'g\'ri so\'rov formati'}, status=400)
+
+    if not email or '@' not in email or '.' not in email.split('@')[-1]:
+        return JsonResponse({'success': False, 'error': 'Haqiqiy elektron pochta manzilini kiriting'}, status=400)
+
+    # Brute-force va spam cheklovi
+    if auth_rate_limiter.is_rate_limited(request, f"otp_{email}"):
+        return JsonResponse({
+            'success': False,
+            'error': 'Juda ko\'p kod so\'raldi. Xavfsizlik yuzasidan 5 daqiqadan so\'ng qayta urinib ko\'ring.'
+        }, status=429)
+
+    # Email allaqachon ro'yxatdan o'tganligini tekshirish
+    if User.objects.filter(email__iexact=email).exists():
+        return JsonResponse({
+            'success': False,
+            'already_registered': True,
+            'error': 'Ushbu email bilan hisob allaqachon mavjud. Iltimos, tizimga kiring.'
+        }, status=400)
+
+    # 60 soniyalik qayta yuborish (cooldown) tekshiruvi
+    cooldown_key = f"otp_cooldown_{email}"
+    if cache.get(cooldown_key):
+        return JsonResponse({
+            'success': False,
+            'error': 'Kod yaqinda yuborilgan. Iltimos, biroz kuting.'
+        }, status=429)
+
+    # 6 xonali tasdiqlash kodini hosil qilish
+    otp_code = f"{random.randint(100000, 999999)}"
+
+    # Keshda 10 daqiqa (600 soniya) saqlash
+    cache_key = f"reg_otp_{email}"
+    cache.set(cache_key, {'code': otp_code, 'attempts': 0}, timeout=600)
+    cache.set(cooldown_key, True, timeout=60)
+
+    # Email yuborish
+    subject = f"Muhfil - Tasdiqlash kodi: {otp_code}"
+    html_message = f"""
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f9f9f9; padding: 24px; color: #1a1a1a;">
+      <div style="max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 32px; border: 1px solid #eaeaea; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <h2 style="font-size: 24px; font-weight: 700; margin-top: 0; color: #000000; letter-spacing: -0.5px;">Muhfil</h2>
+        <p style="font-size: 15px; color: #4a4a4a; line-height: 1.5;">Assalomu alaykum! Muhfil platformasida ro'yxatdan o'tish uchun bir martalik tasdiqlash kodingiz:</p>
+        <div style="background: #f4f4f4; border-radius: 12px; padding: 18px; text-align: center; margin: 24px 0; border: 1px dashed #d1d5db;">
+          <span style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #000000; font-family: monospace;">{otp_code}</span>
+        </div>
+        <p style="font-size: 13px; color: #6b7280; line-height: 1.5; margin-bottom: 0;">
+          Ushbu kod <strong>10 daqiqa</strong> davomida amal qiladi. Kodni begonalarga bermang. Agar siz ro'yxatdan o'tishni so'ramagan bo'lsangiz, ushbu xatni e'tiborsiz qoldiring.
+        </p>
+      </div>
+    </body>
+    </html>
+    """
+    plain_message = f"Muhfil platformasida ro'yxatdan o'tish uchun bir martalik tasdiqlash kodingiz: {otp_code}\nUshbu kod 10 daqiqa davomida amal qiladi."
+
+    try:
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            html_message=html_message,
+            fail_silently=False
+        )
+    except Exception as e:
+        print(f"[OTP EMAIL DISPATCH] Kod: {otp_code} email: {email} (SMTP xatolik: {e})")
+
+    return JsonResponse({
+        'success': True,
+        'message': f"Tasdiqlash kodi {email} manziliga yuborildi.",
+        'cooldown': 60
+    })
+
+
+@require_POST
+def verify_otp_api(request):
+    """Foydalanuvchi kiritgan OTP kodini tekshirish."""
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            email = data.get('email', '').strip().lower()
+            code = data.get('code', '').strip()
+        else:
+            email = request.POST.get('email', '').strip().lower()
+            code = request.POST.get('code', '').strip()
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'Noto\'g\'ri so\'rov formati'}, status=400)
+
+    if not email or not code:
+        return JsonResponse({'success': False, 'error': 'Email va tasdiqlash kodi talab qilinadi'}, status=400)
+
+    cache_key = f"reg_otp_{email}"
+    cached_data = cache.get(cache_key)
+    if not cached_data:
+        return JsonResponse({'success': False, 'error': 'Tasdiqlash kodi eskirgan yoki so\'ralmagan. Qaytadan kod so\'rang.'}, status=400)
+
+    if cached_data.get('code') != code:
+        cached_data['attempts'] = cached_data.get('attempts', 0) + 1
+        if cached_data['attempts'] >= 5:
+            cache.delete(cache_key)
+            return JsonResponse({'success': False, 'error': 'Ko\'p xato urinishlar qilindi. Yangi kod so\'rang.'}, status=400)
+        cache.set(cache_key, cached_data, timeout=300)
+        return JsonResponse({'success': False, 'error': 'Noto\'g\'ri tasdiqlash kodi'}, status=400)
+
+    return JsonResponse({'success': True, 'message': 'Kod muvaffaqiyatli tasdiqlandi'})
 
 
 def register_view(request):
@@ -31,11 +159,13 @@ def register_view(request):
                 return JsonResponse({'success': False, 'error': 'Noto\'g\'ri JSON formati'}, status=400)
             full_name = data.get('full_name', '').strip()
             email = data.get('email', '').strip().lower()
+            otp_code = data.get('otp_code', '').strip()
             password = data.get('password', '')
             remember = data.get('remember', True)
         else:
             full_name = request.POST.get('full_name', '').strip()
             email = request.POST.get('email', '').strip().lower()
+            otp_code = request.POST.get('otp_code', '').strip()
             password = request.POST.get('password', '')
             remember = request.POST.get('remember', True)
 
@@ -49,6 +179,36 @@ def register_view(request):
         if not email or not password:
             auth_rate_limiter.record_failure(request, email)
             msg = 'Elektron pochta va parol kiritilishi shart'
+            if request.content_type == 'application/json':
+                return JsonResponse({'success': False, 'error': msg}, status=400)
+            return render(request, 'register.html', {'error': msg})
+
+        # OTP tekshiruvi (Email tasdiqlash)
+        if not otp_code:
+            auth_rate_limiter.record_failure(request, email)
+            msg = 'Emailga yuborilgan tasdiqlash kodini kiriting'
+            if request.content_type == 'application/json':
+                return JsonResponse({'success': False, 'error': msg}, status=400)
+            return render(request, 'register.html', {'error': msg})
+
+        cache_key = f"reg_otp_{email}"
+        cached_otp = cache.get(cache_key)
+        if not cached_otp:
+            auth_rate_limiter.record_failure(request, email)
+            msg = 'Tasdiqlash kodi eskirgan yoki topilmadi. Iltimos, qaytadan kod so\'rang.'
+            if request.content_type == 'application/json':
+                return JsonResponse({'success': False, 'error': msg}, status=400)
+            return render(request, 'register.html', {'error': msg})
+
+        if cached_otp.get('code') != otp_code:
+            cached_otp['attempts'] = cached_otp.get('attempts', 0) + 1
+            if cached_otp['attempts'] >= 5:
+                cache.delete(cache_key)
+                msg = 'Juda ko\'p xato kod kiritildi. Qaytadan yangi kod so\'rang.'
+            else:
+                cache.set(cache_key, cached_otp, timeout=300)
+                msg = 'Kiritilgan tasdiqlash kodi noto\'g\'ri'
+            auth_rate_limiter.record_failure(request, email)
             if request.content_type == 'application/json':
                 return JsonResponse({'success': False, 'error': msg}, status=400)
             return render(request, 'register.html', {'error': msg})
@@ -100,6 +260,9 @@ def register_view(request):
             description="Default private reading list",
             is_private=True
         )
+
+        # OTP muvaffaqiyatli ishlatilgandan so'ng keshdan tozalash
+        cache.delete(cache_key)
 
         auth_rate_limiter.reset_attempts(request, email)
         auth_login(request, user)

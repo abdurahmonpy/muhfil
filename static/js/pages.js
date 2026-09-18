@@ -203,32 +203,292 @@
 
 
 /* ==========================================================================
-   REGISTER PAGE — Real form submission with loading state
+   UNIVERSAL PASSWORD VISIBILITY TOGGLE
+   ========================================================================== */
+document.addEventListener('click', function(e) {
+  var toggleBtn = e.target.closest('[data-toggle-password]');
+  if (!toggleBtn) return;
+  var targetId = toggleBtn.getAttribute('data-toggle-password');
+  var targetInput = document.getElementById(targetId);
+  if (!targetInput) return;
+  var icon = toggleBtn.querySelector('i');
+  if (targetInput.type === 'password') {
+    targetInput.type = 'text';
+    if (icon) icon.className = 'bi bi-eye-slash';
+  } else {
+    targetInput.type = 'password';
+    if (icon) icon.className = 'bi bi-eye';
+  }
+});
+
+/* ==========================================================================
+   REGISTER PAGE — 2-Step OTP Registration Flow
    ========================================================================== */
 (function initRegisterPage() {
-  const registerForm = document.getElementById('register-form');
-  if (!registerForm) return;
+  const step1 = document.getElementById('regpage-step-1');
+  const step2 = document.getElementById('regpage-step-2');
+  if (!step1 || !step2) return;
 
-  registerForm.addEventListener('submit', (e) => {
-    const passwordInput = registerForm.querySelector('input[name="password"]');
-    if (passwordInput && passwordInput.value.length < 8) {
-      e.preventDefault();
-      if (typeof showToast === 'function') {
-        showToast('Parol kamida 8 ta belgidan iborat bo\'lishi kerak!');
-      } else {
-        alert('Parol kamida 8 ta belgidan iborat bo\'lishi kerak!');
-      }
-      passwordInput.focus();
-      return;
+  const step1Form = document.getElementById('regpage-step1-form');
+  const step1Error = document.getElementById('regpage-step1-error');
+  const emailInput = document.getElementById('regpage-email-input');
+  const displayEmail = document.getElementById('regpage-display-email');
+  const btnSendOtp = document.getElementById('btn-regpage-send-otp');
+
+  const step2Form = document.getElementById('regpage-step2-form');
+  const step2Error = document.getElementById('regpage-step2-error');
+  const otpInput = document.getElementById('regpage-otp-input');
+  const nameInput = document.getElementById('regpage-name-input');
+  const passwordInput = document.getElementById('regpage-password-input');
+  const btnResend = document.getElementById('btn-resend-regpage-otp');
+  const btnComplete = document.getElementById('btn-regpage-complete');
+  const btnChangeEmail = document.getElementById('btn-regpage-change-email');
+  const btnBack = document.getElementById('btn-regpage-back');
+
+  function getCsrf() {
+    if (typeof getCookie === 'function') return getCookie('csrftoken') || '';
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+  }
+
+  let cooldownTimer = null;
+  function startCooldown(sec) {
+    if (cooldownTimer) clearInterval(cooldownTimer);
+    let remaining = sec || 60;
+    if (btnResend) {
+      btnResend.disabled = true;
+      btnResend.innerHTML = 'Resend in <span id="regpage-cooldown-timer">' + remaining + '</span>s';
     }
+    cooldownTimer = setInterval(() => {
+      remaining--;
+      const curSpan = document.getElementById('regpage-cooldown-timer');
+      if (curSpan) curSpan.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(cooldownTimer);
+        cooldownTimer = null;
+        if (btnResend) {
+          btnResend.disabled = false;
+          btnResend.textContent = 'Resend code';
+        }
+      }
+    }, 1000);
+  }
 
-    const btn = registerForm.querySelector('button[type="submit"]');
+  // Step 1: Send OTP
+  if (step1Form) {
+    step1Form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (step1Error) {
+        step1Error.classList.add('hidden');
+        step1Error.innerHTML = '';
+      }
+      const email = emailInput ? emailInput.value.trim() : '';
+      if (!email) return;
+
+      const origText = btnSendOtp ? btnSendOtp.innerHTML : '';
+      if (btnSendOtp) {
+        btnSendOtp.disabled = true;
+        btnSendOtp.classList.add('opacity-70', 'cursor-not-allowed');
+        btnSendOtp.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Sending code...';
+      }
+
+      fetch('/api/auth/send-otp/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrf()
+        },
+        body: JSON.stringify({ email: email })
+      })
+      .then(res => res.json().then(data => ({ status: res.status, data: data })))
+      .then(result => {
+        const data = result.data;
+        if (data.success) {
+          if (displayEmail) displayEmail.textContent = email;
+          step1.classList.add('hidden');
+          step2.classList.remove('hidden');
+          if (otpInput) {
+            otpInput.value = '';
+            setTimeout(() => otpInput.focus(), 150);
+          }
+          startCooldown(data.cooldown || 60);
+          if (typeof showToast === 'function') showToast(data.message || 'Verification code sent to your email!');
+        } else {
+          if (step1Error) {
+            step1Error.textContent = data.error || 'Failed to send code.';
+            if (data.already_registered) {
+              step1Error.innerHTML = (data.error || 'Account exists.') + ' <a href="/login/" class="underline font-bold ml-1">Sign in</a>';
+            }
+            step1Error.classList.remove('hidden');
+          } else {
+            alert(data.error || 'Failed to send code.');
+          }
+        }
+      })
+      .catch(() => {
+        if (step1Error) {
+          step1Error.textContent = 'Network error. Please try again.';
+          step1Error.classList.remove('hidden');
+        }
+      })
+      .finally(() => {
+        if (btnSendOtp) {
+          btnSendOtp.disabled = false;
+          btnSendOtp.classList.remove('opacity-70', 'cursor-not-allowed');
+          btnSendOtp.innerHTML = origText;
+        }
+      });
+    });
+  }
+
+  // Back / Change Email
+  [btnChangeEmail, btnBack].forEach(btn => {
     if (btn) {
-      btn.disabled = true;
-      btn.classList.add('opacity-70', 'cursor-not-allowed');
-      btn.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Ro\'yxatdan o\'tilmoqda...';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        step2.classList.add('hidden');
+        step1.classList.remove('hidden');
+        if (emailInput) emailInput.focus();
+      });
     }
   });
+
+  // Resend OTP
+  if (btnResend) {
+    btnResend.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (btnResend.disabled) return;
+      const email = emailInput ? emailInput.value.trim() : '';
+      if (!email) return;
+
+      btnResend.disabled = true;
+      btnResend.textContent = 'Sending...';
+
+      fetch('/api/auth/send-otp/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrf()
+        },
+        body: JSON.stringify({ email: email })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          startCooldown(data.cooldown || 60);
+          if (step2Error) step2Error.classList.add('hidden');
+          if (typeof showToast === 'function') showToast('New verification code sent!');
+        } else {
+          btnResend.disabled = false;
+          btnResend.textContent = 'Resend code';
+          if (step2Error) {
+            step2Error.textContent = data.error || 'Failed to resend code';
+            step2Error.classList.remove('hidden');
+          }
+        }
+      })
+      .catch(() => {
+        btnResend.disabled = false;
+        btnResend.textContent = 'Resend code';
+      });
+    });
+  }
+
+  // Step 2: Complete Registration
+  if (step2Form) {
+    step2Form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (step2Error) {
+        step2Error.classList.add('hidden');
+        step2Error.textContent = '';
+      }
+
+      const email = emailInput ? emailInput.value.trim() : '';
+      const otpCode = otpInput ? otpInput.value.trim() : '';
+      const fullName = nameInput ? nameInput.value.trim() : '';
+      const password = passwordInput ? passwordInput.value : '';
+
+      if (!otpCode || otpCode.length !== 6) {
+        if (step2Error) {
+          step2Error.textContent = 'Iltimos, 6 xonali tasdiqlash kodini to\'liq kiriting.';
+          step2Error.classList.remove('hidden');
+        }
+        if (otpInput) otpInput.focus();
+        return;
+      }
+
+      if (!fullName) {
+        if (step2Error) {
+          step2Error.textContent = 'Iltimos, to\'liq ismingizni kiriting.';
+          step2Error.classList.remove('hidden');
+        }
+        if (nameInput) nameInput.focus();
+        return;
+      }
+
+      if (!password || password.length < 8) {
+        if (step2Error) {
+          step2Error.textContent = 'Parol kamida 8 ta belgidan iborat bo\'lishi kerak.';
+          step2Error.classList.remove('hidden');
+        }
+        if (passwordInput) passwordInput.focus();
+        return;
+      }
+
+      const origText = btnComplete ? btnComplete.innerHTML : '';
+      if (btnComplete) {
+        btnComplete.disabled = true;
+        btnComplete.classList.add('opacity-70', 'cursor-not-allowed');
+        btnComplete.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Creating account...';
+      }
+
+      fetch('/register/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrf()
+        },
+        body: JSON.stringify({
+          email: email,
+          otp_code: otpCode,
+          full_name: fullName,
+          password: password,
+          remember: true
+        })
+      })
+      .then(res => res.json().then(data => ({ status: res.status, data: data })))
+      .then(result => {
+        const data = result.data;
+        if (data.success) {
+          if (typeof showToast === 'function') showToast('Muvaffaqiyatli ro\'yxatdan o\'tdingiz!');
+          window.location.href = data.redirect_url || '/';
+        } else {
+          if (step2Error) {
+            step2Error.textContent = data.error || 'Ro\'yxatdan o\'tishda xatolik yuz berdi.';
+            step2Error.classList.remove('hidden');
+          } else {
+            alert(data.error || 'Ro\'yxatdan o\'tishda xatolik yuz berdi.');
+          }
+          if (btnComplete) {
+            btnComplete.disabled = false;
+            btnComplete.classList.remove('opacity-70', 'cursor-not-allowed');
+            btnComplete.innerHTML = origText;
+          }
+        }
+      })
+      .catch(() => {
+        if (step2Error) {
+          step2Error.textContent = 'Server bilan bog\'lanishda xatolik yuz berdi.';
+          step2Error.classList.remove('hidden');
+        }
+        if (btnComplete) {
+          btnComplete.disabled = false;
+          btnComplete.classList.remove('opacity-70', 'cursor-not-allowed');
+          btnComplete.innerHTML = origText;
+        }
+      });
+    });
+  }
 })();
 
 
@@ -314,11 +574,63 @@
     if (e.key === 'Escape' && !backdrop.classList.contains('hidden')) closeModal();
   });
 
+  var signupStep1 = document.getElementById('signup-step-1');
+  var signupStep2 = document.getElementById('signup-step-2');
+  var signupStep1Error = document.getElementById('signup-step1-error');
+  var signupStep2Error = document.getElementById('signup-step2-error');
+  var signupEmailInput = document.getElementById('signup-email-input');
+  var signupDisplayEmail = document.getElementById('signup-display-email');
+  var btnSendSignupOtp = document.getElementById('btn-send-signup-otp');
+  var btnResendSignupOtp = document.getElementById('btn-resend-signup-otp');
+  var signupOtpInput = document.getElementById('signup-otp-input');
+  var signupNameInput = document.getElementById('signup-name-input');
+  var signupPasswordInput = document.getElementById('signup-password-input');
+  var signupRememberCheck = document.getElementById('signup-remember-check');
+  var btnCompleteSignup = document.getElementById('btn-complete-signup');
+
+  var modalCooldownTimer = null;
+  function startModalCooldown(seconds) {
+    if (modalCooldownTimer) clearInterval(modalCooldownTimer);
+    var remaining = seconds || 60;
+    if (btnResendSignupOtp) {
+      btnResendSignupOtp.disabled = true;
+      btnResendSignupOtp.innerHTML = 'Resend in <span id="signup-cooldown-timer">' + remaining + '</span>s';
+    }
+    modalCooldownTimer = setInterval(function() {
+      remaining--;
+      var span = document.getElementById('signup-cooldown-timer');
+      if (span) span.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(modalCooldownTimer);
+        modalCooldownTimer = null;
+        if (btnResendSignupOtp) {
+          btnResendSignupOtp.disabled = false;
+          btnResendSignupOtp.textContent = 'Resend code';
+        }
+      }
+    }, 1000);
+  }
+
+  function resetModalSignupState() {
+    if (signupStep1) signupStep1.classList.remove('hidden');
+    if (signupStep2) signupStep2.classList.add('hidden');
+    if (signupStep1Error) {
+      signupStep1Error.classList.add('hidden');
+      signupStep1Error.innerHTML = '';
+    }
+    if (signupStep2Error) {
+      signupStep2Error.classList.add('hidden');
+      signupStep2Error.innerHTML = '';
+    }
+  }
+
   var btnShowEmailSignup = document.getElementById('btn-show-email-signup');
   if (btnShowEmailSignup) {
     btnShowEmailSignup.addEventListener('click', function() {
       hideAllViews();
+      resetModalSignupState();
       if (viewSignupEmail) viewSignupEmail.classList.remove('hidden');
+      if (signupEmailInput) setTimeout(function() { signupEmailInput.focus(); }, 150);
     });
   }
 
@@ -334,7 +646,14 @@
   if (btnShowEmailSignin) {
     btnShowEmailSignin.addEventListener('click', function() {
       hideAllViews();
+      var signinErr = document.getElementById('signin-email-error');
+      if (signinErr) {
+        signinErr.classList.add('hidden');
+        signinErr.innerHTML = '';
+      }
       if (viewSigninEmail) viewSigninEmail.classList.remove('hidden');
+      var signinIdent = document.getElementById('signin-identifier-input');
+      if (signinIdent) setTimeout(function() { signinIdent.focus(); }, 150);
     });
   }
 
@@ -368,57 +687,115 @@
     return match ? match[1] : '';
   }
 
-  var signupForm = document.getElementById('email-signup-form');
-  if (signupForm) {
-    signupForm.addEventListener('submit', function(e) {
+  // --- Modal Signup Step 1: Send OTP ---
+  var signupStep1Form = document.getElementById('signup-step1-form');
+  if (signupStep1Form) {
+    signupStep1Form.addEventListener('submit', function(e) {
       e.preventDefault();
-      var emailInput = signupForm.querySelector('input[name="email"]') || signupForm.querySelector('input[type="email"]') || signupForm.querySelector('input[type="text"]');
-      var nameInput = signupForm.querySelector('input[type="text"]:not([name="email"])');
-      var email = emailInput ? emailInput.value.trim() : '';
-      var name = nameInput ? nameInput.value.trim() : '';
+      if (signupStep1Error) {
+        signupStep1Error.classList.add('hidden');
+        signupStep1Error.innerHTML = '';
+      }
+
+      var email = signupEmailInput ? signupEmailInput.value.trim() : '';
       if (!email) return;
 
-      var btn = signupForm.querySelector('button[type="submit"]');
-      if (btn) btn.disabled = true;
+      var origBtnText = btnSendSignupOtp ? btnSendSignupOtp.innerHTML : '';
+      if (btnSendSignupOtp) {
+        btnSendSignupOtp.disabled = true;
+        btnSendSignupOtp.classList.add('opacity-70', 'cursor-not-allowed');
+        btnSendSignupOtp.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Sending code...';
+      }
 
-      fetch('/api/auth/google/', {
+      fetch('/api/auth/send-otp/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': getCsrfToken()
         },
-        body: JSON.stringify({ email: email, name: name })
+        body: JSON.stringify({ email: email })
       })
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
+      .then(function(res) {
+        return res.json().then(function(data) {
+          return { status: res.status, data: data };
+        });
+      })
+      .then(function(result) {
+        var data = result.data;
         if (data.success) {
-          if (typeof showToast === 'function') showToast('Muvaffaqiyatli ro\'yxatdan o\'tdingiz!');
-          window.location.href = data.redirect_url || '/';
+          if (signupDisplayEmail) signupDisplayEmail.textContent = email;
+          if (signupStep1) signupStep1.classList.add('hidden');
+          if (signupStep2) signupStep2.classList.remove('hidden');
+          if (signupOtpInput) {
+            signupOtpInput.value = '';
+            setTimeout(function() { signupOtpInput.focus(); }, 150);
+          }
+          startModalCooldown(data.cooldown || 60);
+          if (typeof showToast === 'function') showToast(data.message || 'Verification code sent to your email!');
         } else {
-          if (btn) btn.disabled = false;
-          if (typeof showToast === 'function') showToast(data.error || 'Xatolik yuz berdi');
-          else alert(data.error || 'Xatolik yuz berdi');
+          if (signupStep1Error) {
+            signupStep1Error.textContent = data.error || 'Failed to send code.';
+            if (data.already_registered) {
+              signupStep1Error.innerHTML = (data.error || 'Account exists.') + ' <button type="button" class="underline font-bold ml-1" id="link-modal-err-signin">Sign in</button>';
+              var errSigninBtn = document.getElementById('link-modal-err-signin');
+              if (errSigninBtn) {
+                errSigninBtn.addEventListener('click', function() {
+                  hideAllViews();
+                  if (viewSigninEmail) {
+                    viewSigninEmail.classList.remove('hidden');
+                    var signinIdent = document.getElementById('signin-identifier-input');
+                    if (signinIdent) signinIdent.value = email;
+                  }
+                });
+              }
+            }
+            signupStep1Error.classList.remove('hidden');
+          } else {
+            alert(data.error || 'Failed to send code.');
+          }
         }
       })
       .catch(function() {
-        if (btn) btn.disabled = false;
-        if (typeof showToast === 'function') showToast('Xatolik yuz berdi');
+        if (signupStep1Error) {
+          signupStep1Error.textContent = 'Network error. Please try again.';
+          signupStep1Error.classList.remove('hidden');
+        }
+      })
+      .finally(function() {
+        if (btnSendSignupOtp) {
+          btnSendSignupOtp.disabled = false;
+          btnSendSignupOtp.classList.remove('opacity-70', 'cursor-not-allowed');
+          btnSendSignupOtp.innerHTML = origBtnText;
+        }
       });
     });
   }
 
-  var signinForm = document.getElementById('email-signin-form');
-  if (signinForm) {
-    signinForm.addEventListener('submit', function(e) {
+  // Back to Step 1 / Change Email
+  ['btn-signup-change-email', 'btn-back-to-step1'].forEach(function(id) {
+    var btn = document.getElementById(id);
+    if (btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (signupStep2) signupStep2.classList.add('hidden');
+        if (signupStep1) signupStep1.classList.remove('hidden');
+        if (signupEmailInput) setTimeout(function() { signupEmailInput.focus(); }, 100);
+      });
+    }
+  });
+
+  // Resend OTP in Modal
+  if (btnResendSignupOtp) {
+    btnResendSignupOtp.addEventListener('click', function(e) {
       e.preventDefault();
-      var emailInput = signinForm.querySelector('input[name="email"]') || signinForm.querySelector('input[type="email"]') || signinForm.querySelector('input[type="text"]');
-      var email = emailInput ? emailInput.value.trim() : '';
+      if (btnResendSignupOtp.disabled) return;
+      var email = signupEmailInput ? signupEmailInput.value.trim() : '';
       if (!email) return;
 
-      var btn = signinForm.querySelector('button[type="submit"]');
-      if (btn) btn.disabled = true;
+      btnResendSignupOtp.disabled = true;
+      btnResendSignupOtp.textContent = 'Sending...';
 
-      fetch('/api/auth/google/', {
+      fetch('/api/auth/send-otp/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -429,17 +806,209 @@
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (data.success) {
-          if (typeof showToast === 'function') showToast('Muvaffaqiyatli tizimga kirdingiz!');
-          window.location.href = data.redirect_url || '/';
+          startModalCooldown(data.cooldown || 60);
+          if (signupStep2Error) signupStep2Error.classList.add('hidden');
+          if (typeof showToast === 'function') showToast('New verification code sent!');
         } else {
-          if (btn) btn.disabled = false;
-          if (typeof showToast === 'function') showToast(data.error || 'Xatolik yuz berdi');
-          else alert(data.error || 'Xatolik yuz berdi');
+          btnResendSignupOtp.disabled = false;
+          btnResendSignupOtp.textContent = 'Resend code';
+          if (signupStep2Error) {
+            signupStep2Error.textContent = data.error || 'Failed to resend code';
+            signupStep2Error.classList.remove('hidden');
+          }
         }
       })
       .catch(function() {
-        if (btn) btn.disabled = false;
-        if (typeof showToast === 'function') showToast('Xatolik yuz berdi');
+        btnResendSignupOtp.disabled = false;
+        btnResendSignupOtp.textContent = 'Resend code';
+      });
+    });
+  }
+
+  // --- Modal Signup Step 2: Complete Registration ---
+  var signupStep2Form = document.getElementById('signup-step2-form');
+  if (signupStep2Form) {
+    signupStep2Form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (signupStep2Error) {
+        signupStep2Error.classList.add('hidden');
+        signupStep2Error.textContent = '';
+      }
+
+      var email = signupEmailInput ? signupEmailInput.value.trim() : '';
+      var otpCode = signupOtpInput ? signupOtpInput.value.trim() : '';
+      var fullName = signupNameInput ? signupNameInput.value.trim() : '';
+      var password = signupPasswordInput ? signupPasswordInput.value : '';
+      var remember = signupRememberCheck ? signupRememberCheck.checked : true;
+
+      if (!otpCode || otpCode.length !== 6) {
+        if (signupStep2Error) {
+          signupStep2Error.textContent = 'Iltimos, 6 xonali tasdiqlash kodini to\'liq kiriting.';
+          signupStep2Error.classList.remove('hidden');
+        }
+        if (signupOtpInput) signupOtpInput.focus();
+        return;
+      }
+
+      if (!fullName) {
+        if (signupStep2Error) {
+          signupStep2Error.textContent = 'Iltimos, to\'liq ismingizni kiriting.';
+          signupStep2Error.classList.remove('hidden');
+        }
+        if (signupNameInput) signupNameInput.focus();
+        return;
+      }
+
+      if (!password || password.length < 8) {
+        if (signupStep2Error) {
+          signupStep2Error.textContent = 'Parol kamida 8 ta belgidan iborat bo\'lishi kerak.';
+          signupStep2Error.classList.remove('hidden');
+        }
+        if (signupPasswordInput) signupPasswordInput.focus();
+        return;
+      }
+
+      var origBtnText = btnCompleteSignup ? btnCompleteSignup.innerHTML : '';
+      if (btnCompleteSignup) {
+        btnCompleteSignup.disabled = true;
+        btnCompleteSignup.classList.add('opacity-70', 'cursor-not-allowed');
+        btnCompleteSignup.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Creating account...';
+      }
+
+      fetch('/register/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+          email: email,
+          otp_code: otpCode,
+          full_name: fullName,
+          password: password,
+          remember: remember
+        })
+      })
+      .then(function(res) {
+        return res.json().then(function(data) {
+          return { status: res.status, data: data };
+        });
+      })
+      .then(function(result) {
+        var data = result.data;
+        if (data.success) {
+          if (typeof showToast === 'function') showToast('Muvaffaqiyatli ro\'yxatdan o\'tdingiz!');
+          window.location.href = data.redirect_url || '/';
+        } else {
+          if (signupStep2Error) {
+            signupStep2Error.textContent = data.error || 'Ro\'yxatdan o\'tishda xatolik yuz berdi.';
+            signupStep2Error.classList.remove('hidden');
+          } else {
+            alert(data.error || 'Ro\'yxatdan o\'tishda xatolik yuz berdi.');
+          }
+          if (btnCompleteSignup) {
+            btnCompleteSignup.disabled = false;
+            btnCompleteSignup.classList.remove('opacity-70', 'cursor-not-allowed');
+            btnCompleteSignup.innerHTML = origBtnText;
+          }
+        }
+      })
+      .catch(function() {
+        if (signupStep2Error) {
+          signupStep2Error.textContent = 'Server bilan bog\'lanishda xatolik yuz berdi.';
+          signupStep2Error.classList.remove('hidden');
+        }
+        if (btnCompleteSignup) {
+          btnCompleteSignup.disabled = false;
+          btnCompleteSignup.classList.remove('opacity-70', 'cursor-not-allowed');
+          btnCompleteSignup.innerHTML = origBtnText;
+        }
+      });
+    });
+  }
+
+  // --- Modal Sign In: Password Authentication ---
+  var signinForm = document.getElementById('email-signin-form');
+  var signinEmailError = document.getElementById('signin-email-error');
+  var btnSubmitSignin = document.getElementById('btn-submit-signin');
+
+  if (signinForm) {
+    signinForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (signinEmailError) {
+        signinEmailError.classList.add('hidden');
+        signinEmailError.textContent = '';
+      }
+
+      var identInput = document.getElementById('signin-identifier-input');
+      var passInput = document.getElementById('signin-password-input');
+      var remInput = document.getElementById('signin-remember-check');
+
+      var identifier = identInput ? identInput.value.trim() : '';
+      var password = passInput ? passInput.value : '';
+      var remember = remInput ? remInput.checked : true;
+
+      if (!identifier || !password) {
+        if (signinEmailError) {
+          signinEmailError.textContent = 'Email / username va parolni kiriting.';
+          signinEmailError.classList.remove('hidden');
+        }
+        return;
+      }
+
+      var origBtnText = btnSubmitSignin ? btnSubmitSignin.innerHTML : '';
+      if (btnSubmitSignin) {
+        btnSubmitSignin.disabled = true;
+        btnSubmitSignin.classList.add('opacity-70', 'cursor-not-allowed');
+        btnSubmitSignin.innerHTML = '<span class="inline-block animate-spin mr-2">⟳</span> Kirilmoqda...';
+      }
+
+      fetch('/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+          identifier: identifier,
+          password: password,
+          remember: remember
+        })
+      })
+      .then(function(res) {
+        return res.json().then(function(data) {
+          return { status: res.status, data: data };
+        });
+      })
+      .then(function(result) {
+        var data = result.data;
+        if (data.success) {
+          if (typeof showToast === 'function') showToast('Muvaffaqiyatli tizimga kirdingiz!');
+          window.location.href = data.redirect_url || '/';
+        } else {
+          if (signinEmailError) {
+            signinEmailError.textContent = data.error || 'Noto\'g\'ri login yoki parol.';
+            signinEmailError.classList.remove('hidden');
+          } else {
+            alert(data.error || 'Noto\'g\'ri login yoki parol.');
+          }
+          if (btnSubmitSignin) {
+            btnSubmitSignin.disabled = false;
+            btnSubmitSignin.classList.remove('opacity-70', 'cursor-not-allowed');
+            btnSubmitSignin.innerHTML = origBtnText;
+          }
+        }
+      })
+      .catch(function() {
+        if (signinEmailError) {
+          signinEmailError.textContent = 'Server bilan bog\'lanishda xatolik yuz berdi.';
+          signinEmailError.classList.remove('hidden');
+        }
+        if (btnSubmitSignin) {
+          btnSubmitSignin.disabled = false;
+          btnSubmitSignin.classList.remove('opacity-70', 'cursor-not-allowed');
+          btnSubmitSignin.innerHTML = origBtnText;
+        }
       });
     });
   }

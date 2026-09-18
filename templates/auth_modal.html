@@ -46,48 +46,95 @@
       </p>
     </div>
 
+    <!-- SIGN UP WITH EMAIL (2-STEP OTP FLOW) -->
     <div id="auth-view-signup-email" class="w-full flex flex-col items-center hidden">
-      <h2 class="font-serif text-3xl sm:text-[38px] text-center text-gray-900 font-normal tracking-tight mb-8">Sign up with email</h2>
+      <!-- Step 1: Enter Email -->
+      <div id="signup-step-1" class="w-full flex flex-col items-center">
+        <h2 class="font-serif text-3xl sm:text-[38px] text-center text-gray-900 font-normal tracking-tight mb-3">Sign up with email</h2>
+        <p class="text-xs text-gray-500 text-center mb-6 max-w-xs">Enter your email address to receive a 6-digit verification code.</p>
 
-      <form id="email-signup-form" class="w-full max-w-[340px] space-y-4">
-        <div>
-          <label class="block text-xs font-normal text-gray-700 mb-1">Your full name</label>
-          <input type="text" required placeholder="Enter your full name" class="w-full px-3 py-2.5 text-sm rounded bg-[#F2F2F2] border-0 focus:outline-none focus:ring-1 focus:ring-black text-gray-900 placeholder-gray-400">
-        </div>
+        <form id="signup-step1-form" class="w-full max-w-[340px] space-y-4">
+          <div id="signup-step1-error" class="hidden p-3 text-xs text-red-700 bg-red-50 rounded-lg border border-red-200"></div>
 
-        <div>
-          <label class="block text-xs font-normal text-gray-700 mb-1">Your email</label>
-          <input type="email" name="email" required placeholder="your.name@example.com" class="w-full px-3 py-2.5 text-sm rounded bg-[#F2F2F2] border-0 focus:outline-none focus:ring-1 focus:ring-black text-gray-900 placeholder-gray-400">
-        </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Your email</label>
+            <input type="email" id="signup-email-input" name="email" required placeholder="your.name@example.com" class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-[#F2F2F2] border-0 focus:outline-none focus:ring-1 focus:ring-black text-gray-900 placeholder-gray-400">
+          </div>
 
-        <label class="flex items-center space-x-2 text-xs text-gray-700 pt-1 cursor-pointer select-none">
-          <input type="checkbox" checked class="rounded border-gray-800 text-black focus:ring-0">
-          <span>Remember me for faster sign in</span>
-        </label>
+          <button type="submit" id="btn-send-signup-otp" class="w-full bg-black hover:bg-neutral-800 text-white font-medium text-sm py-2.5 rounded-full transition shadow-sm flex items-center justify-center space-x-2">
+            <span>Send verification code</span>
+          </button>
 
-        <button type="submit" class="w-full bg-black hover:bg-neutral-800 text-white font-medium text-sm py-2.5 rounded-full transition shadow-sm mt-2">
-          Create account
-        </button>
+          <button type="button" id="btn-back-signup-options" class="block w-full text-center text-xs text-gray-700 hover:underline pt-2">
+            &larr; Back to all sign up options
+          </button>
 
-        <button type="button" id="btn-back-signup-options" class="block w-full text-center text-xs text-gray-700 hover:underline pt-2">
-          &larr; Back to sign up options
-        </button>
+          <p class="text-center text-xs text-gray-700 pt-2">
+            Already have an account?
+            <button type="button" id="btn-email-goto-signin" class="font-bold text-gray-900 underline hover:opacity-80 ml-1">Sign in</button>
+          </p>
+        </form>
+      </div>
 
-        <p class="text-center text-xs text-gray-700 pt-2">
-          Already have an account?
-          <button type="button" id="btn-email-goto-signin" class="font-bold text-gray-900 underline hover:opacity-80 ml-1">Sign in</button>
+      <!-- Step 2: Enter OTP, Full name, Password -->
+      <div id="signup-step-2" class="w-full flex flex-col items-center hidden">
+        <h2 class="font-serif text-3xl sm:text-[36px] text-center text-gray-900 font-normal tracking-tight mb-2">Check your email</h2>
+        <p class="text-xs text-gray-500 text-center mb-6 max-w-xs leading-relaxed">
+          We sent a 6-digit code to <span id="signup-display-email" class="font-semibold text-gray-900"></span>.
+          <button type="button" id="btn-signup-change-email" class="text-medium-green font-medium underline ml-1">Edit</button>
         </p>
-      </form>
 
-      <p class="text-[10px] text-gray-400 text-center pt-8 leading-relaxed max-w-sm">
-        By clicking "Create Account", you accept Muhfil's
+        <form id="signup-step2-form" class="w-full max-w-[340px] space-y-3.5">
+          <div id="signup-step2-error" class="hidden p-3 text-xs text-red-700 bg-red-50 rounded-lg border border-red-200"></div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-medium text-gray-700">6-digit verification code</label>
+              <button type="button" id="btn-resend-signup-otp" class="text-xs text-medium-green hover:underline font-medium disabled:text-gray-400 disabled:no-underline" disabled>
+                Resend in <span id="signup-cooldown-timer">60</span>s
+              </button>
+            </div>
+            <input type="text" id="signup-otp-input" name="otp_code" required maxlength="6" inputmode="numeric" placeholder="123456" class="w-full px-3.5 py-2.5 text-center text-lg font-mono font-bold tracking-[8px] rounded-lg bg-[#F2F2F2] border-0 focus:outline-none focus:ring-1 focus:ring-black text-gray-900 placeholder-gray-400">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Your full name</label>
+            <input type="text" id="signup-name-input" name="full_name" required placeholder="Enter your full name" class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-[#F2F2F2] border-0 focus:outline-none focus:ring-1 focus:ring-black text-gray-900 placeholder-gray-400">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Create password</label>
+            <div class="relative">
+              <input type="password" id="signup-password-input" name="password" required placeholder="At least 8 characters" class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-[#F2F2F2] border-0 focus:outline-none focus:ring-1 focus:ring-black text-gray-900 placeholder-gray-400 pr-10">
+              <button type="button" data-toggle-password="signup-password-input" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black text-sm p-1" title="Show/Hide Password">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <label class="flex items-center space-x-2 text-xs text-gray-700 pt-0.5 cursor-pointer select-none">
+            <input type="checkbox" id="signup-remember-check" checked class="rounded border-gray-800 text-black focus:ring-0">
+            <span>Remember me for faster sign in</span>
+          </label>
+
+          <button type="submit" id="btn-complete-signup" class="w-full bg-black hover:bg-neutral-800 text-white font-medium text-sm py-2.5 rounded-full transition shadow-sm flex items-center justify-center space-x-2 mt-2">
+            <span>Create account</span>
+          </button>
+
+          <button type="button" id="btn-back-to-step1" class="block w-full text-center text-xs text-gray-700 hover:underline pt-1">
+            &larr; Re-enter email address
+          </button>
+        </form>
+      </div>
+
+      <p class="text-[10px] text-gray-400 text-center pt-6 leading-relaxed max-w-sm">
+        By clicking "Create account", you accept Muhfil's
         <a href="#" data-coming-soon="Terms of Service" class="underline">Terms of Service</a> and
-        <a href="#" data-coming-soon="Privacy Policy" class="underline">Privacy Policy</a>. This site uses reCaptcha and the Google
-        <a href="#" data-coming-soon="Google Privacy Policy" class="underline">Privacy Policy</a> and
-        <a href="#" data-coming-soon="Google Terms of Service" class="underline">Terms of Service</a> apply.
+        <a href="#" data-coming-soon="Privacy Policy" class="underline">Privacy Policy</a>.
       </p>
     </div>
 
+    <!-- SIGN IN OPTIONS -->
     <div id="auth-view-signin-options" class="w-full flex flex-col items-center hidden">
       <h2 class="font-serif text-3xl sm:text-[38px] text-center text-gray-900 font-normal tracking-tight mb-8">Welcome back.</h2>
 
@@ -124,22 +171,38 @@
       </p>
     </div>
 
+    <!-- SIGN IN WITH EMAIL (PASSWORD LOGIN) -->
     <div id="auth-view-signin-email" class="w-full flex flex-col items-center hidden">
-      <h2 class="font-serif text-3xl sm:text-[38px] text-center text-gray-900 font-normal tracking-tight mb-8">Sign in with email</h2>
+      <h2 class="font-serif text-3xl sm:text-[38px] text-center text-gray-900 font-normal tracking-tight mb-6">Sign in with email</h2>
 
       <form id="email-signin-form" class="w-full max-w-[340px] space-y-4">
+        <div id="signin-email-error" class="hidden p-3 text-xs text-red-700 bg-red-50 rounded-lg border border-red-200"></div>
+
         <div>
-          <label class="block text-xs font-normal text-gray-700 mb-1">Your email</label>
-          <input type="email" name="email" required placeholder="your.name@example.com" class="w-full px-3 py-2.5 text-sm rounded bg-[#F2F2F2] border-0 focus:outline-none focus:ring-1 focus:ring-black text-gray-900 placeholder-gray-400">
+          <label class="block text-xs font-medium text-gray-700 mb-1">Email or username</label>
+          <input type="text" id="signin-identifier-input" name="identifier" required placeholder="your.name@example.com or username" class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-[#F2F2F2] border-0 focus:outline-none focus:ring-1 focus:ring-black text-gray-900 placeholder-gray-400">
         </div>
 
-        <label class="flex items-center space-x-2 text-xs text-gray-700 pt-1 cursor-pointer select-none">
-          <input type="checkbox" checked class="rounded border-gray-800 text-black focus:ring-0">
-          <span>Remember me for faster sign in</span>
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-medium text-gray-700">Password</label>
+            <a href="#" data-coming-soon="Forgot password reset" class="text-[11px] text-medium-green hover:underline">Forgot?</a>
+          </div>
+          <div class="relative">
+            <input type="password" id="signin-password-input" name="password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 text-sm rounded-lg bg-[#F2F2F2] border-0 focus:outline-none focus:ring-1 focus:ring-black text-gray-900 placeholder-gray-400 pr-10">
+            <button type="button" data-toggle-password="signin-password-input" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black text-sm p-1" title="Show/Hide Password">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <label class="flex items-center space-x-2 text-xs text-gray-700 pt-0.5 cursor-pointer select-none">
+          <input type="checkbox" id="signin-remember-check" checked class="rounded border-gray-800 text-black focus:ring-0">
+          <span>Remember me for 30 days</span>
         </label>
 
-        <button type="submit" class="w-full bg-black hover:bg-neutral-800 text-white font-medium text-sm py-2.5 rounded-full transition shadow-sm mt-2">
-          Continue
+        <button type="submit" id="btn-submit-signin" class="w-full bg-black hover:bg-neutral-800 text-white font-medium text-sm py-2.5 rounded-full transition shadow-sm mt-2 flex items-center justify-center space-x-2">
+          <span>Sign in</span>
         </button>
 
         <button type="button" id="btn-back-signin-options" class="block w-full text-center text-xs text-gray-700 hover:underline pt-2">
@@ -151,10 +214,6 @@
           <button type="button" id="btn-email-goto-signup" class="font-bold text-gray-900 underline hover:opacity-80 ml-1">Create one</button>
         </p>
       </form>
-
-      <p class="text-[10px] text-gray-400 text-center pt-8 leading-relaxed max-w-sm">
-        Click "Continue" to sign in or register with your email address.
-      </p>
     </div>
 
   </div>
