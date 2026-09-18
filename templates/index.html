@@ -28,28 +28,28 @@
     </div>
   </header>
 
-  <section class="hero-section w-full {% if trending_posts or posts %}border-b border-black pt-6 pb-10 sm:pt-8 sm:pb-12 lg:pt-10 lg:pb-14{% else %}flex-1 flex items-center py-12 sm:py-16 lg:py-20{% endif %} bg-[#F7F4ED]" style="background-color: #F7F4ED !important; {% if trending_posts or posts %}border-bottom: 1px solid #000000 !important;{% endif %}">
-    <div class="max-w-[1280px] w-full mx-auto px-6 sm:px-12 lg:px-20 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
+  <section class="hero-section w-full {% if trending_posts or posts %}border-b border-black pt-8 pb-10 sm:pt-12 sm:pb-14 lg:pt-14 lg:pb-16{% else %}flex-1 flex items-center py-12 sm:py-16 lg:py-20{% endif %} bg-[#F7F4ED]" style="background-color: #F7F4ED !important; {% if trending_posts or posts %}border-bottom: 1px solid #000000 !important;{% endif %}">
+    <div class="max-w-[1280px] w-full mx-auto px-5 sm:px-12 lg:px-20 grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
 
-      <div class="lg:col-span-7 space-y-5 sm:space-y-6 -mt-1 sm:-mt-2 lg:-mt-3">
-        <h1 class="hero-headline font-serif font-normal text-5xl sm:text-6xl md:text-7xl lg:text-[84px] tracking-[-0.04em] leading-[0.95] text-black" style="color: #000000 !important;">
+      <div class="md:col-span-7 lg:col-span-7 space-y-4 sm:space-y-6">
+        <h1 class="hero-headline font-serif font-normal text-[44px] sm:text-6xl md:text-7xl lg:text-[84px] tracking-[-0.04em] leading-[1.02] sm:leading-[0.95] text-black" style="color: #000000 !important;">
           Human<br>
           stories &amp; ideas
         </h1>
 
-        <p class="hero-subtitle text-lg sm:text-xl lg:text-[22px] text-gray-800 font-normal leading-snug max-w-[460px]" style="color: #242424 !important;">
+        <p class="hero-subtitle text-base sm:text-xl lg:text-[22px] text-gray-800 font-normal leading-snug max-w-[460px]" style="color: #242424 !important;">
           A place to read, write, and deepen your understanding
         </p>
 
-        <div class="pt-1">
-          <a href="{% url 'feed' %}" class="start-reading-btn inline-block bg-black hover:bg-neutral-800 text-white font-medium text-base sm:text-lg px-8 py-3 rounded-full transition shadow-sm hover:shadow active:scale-[0.98]" style="background-color: #000000 !important; color: #ffffff !important;">
+        <div class="pt-2">
+          <button type="button" data-auth-modal="signup" class="start-reading-btn inline-block bg-black hover:bg-neutral-800 text-white font-medium text-base sm:text-lg px-8 py-3 rounded-full transition shadow-sm hover:shadow active:scale-[0.98]" style="background-color: #000000 !important; color: #ffffff !important;">
             Start reading
-          </a>
+          </button>
         </div>
       </div>
 
-      <div class="lg:col-span-5 flex justify-center lg:justify-end items-center">
-        <div class="w-full max-w-[300px] sm:max-w-[340px] lg:max-w-[380px]">
+      <div class="hidden md:flex md:col-span-5 lg:col-span-5 justify-center md:justify-end items-center">
+        <div class="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[380px]">
           <img 
             src="{% static 'images/medium_landing_graphic.png' %}" 
             class="w-full h-auto object-contain select-none pointer-events-none drop-shadow-sm" 

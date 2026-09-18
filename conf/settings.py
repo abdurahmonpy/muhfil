@@ -74,7 +74,7 @@ TEMPLATES = [
 ]
 
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'feed'
+LOGIN_REDIRECT_URL = 'index'
 LOGOUT_REDIRECT_URL = 'index'
 
 WSGI_APPLICATION = 'conf.wsgi.application'

@@ -16,7 +16,7 @@ User = get_user_model()
 
 def index(request):
     if request.user.is_authenticated:
-        return redirect('feed')
+        return feed(request)
 
     trending_posts = Post.objects.filter(
         status='published'
@@ -82,6 +82,11 @@ def feed(request):
         'recommended_topics': recommended_topics,
     }
     return render(request, 'feed.html', ctx)
+
+
+def feed_redirect(request):
+    """Toza URL uchun /feed/ dan to'g'ridan-to'g'ri bosh sahifaga (/) yo'naltiriladi."""
+    return redirect('index')
 
 
 def story(request, slug=None):
@@ -293,7 +298,7 @@ def delete_post_api(request, post_id):
         return JsonResponse({'success': False, 'error': 'Ruxsat berilmadi'}, status=403)
 
     post.delete()
-    return JsonResponse({'success': True, 'redirect_url': '/feed/'})
+    return JsonResponse({'success': True, 'redirect_url': '/'})
 
 
 @require_POST

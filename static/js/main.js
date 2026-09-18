@@ -1868,7 +1868,7 @@ function initGlobalActions() {
         const modal = document.getElementById('publish-modal');
         if (modal) modal.classList.add('hidden');
         setTimeout(() => {
-          window.location.href = '/feed/';
+          window.location.href = '/';
         }, 1200);
       }
     });
@@ -1911,7 +1911,7 @@ function initGlobalActions() {
         if (data.success) {
           showToast('Hikoya muvaffaqiyatli o\'chirildi');
           setTimeout(() => {
-            window.location.href = data.redirect_url || '/feed/';
+            window.location.href = data.redirect_url || '/';
           }, 600);
         } else {
           showToast(data.error || 'O\'chirishda xatolik yuz berdi', 'error');

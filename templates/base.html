@@ -37,7 +37,7 @@
           <button type="button" id="sidebar-toggle-btn" class="sidebar-toggle-btn p-1 -ml-1 text-gray-700 hover:text-black dark:text-gray-300 dark:hover:text-white shrink-0" title="Toggle Navigation">
             <i class="bi bi-list text-2xl"></i>
           </button>
-          <a href="{% url 'feed' %}" class="sidebar-brand-logo flex items-center space-x-2 group">
+          <a href="{% url 'index' %}" class="sidebar-brand-logo flex items-center space-x-2 group">
             <img src="{% static 'images/muhfil-emblem-black.png' %}" alt="Muhfil" class="h-7 w-7 object-contain dark:hidden shrink-0 transition-transform group-hover:scale-105">
             <img src="{% static 'images/muhfil-emblem-white.png' %}" alt="Muhfil" class="h-7 w-7 object-contain hidden dark:block shrink-0 transition-transform group-hover:scale-105">
             <span class="nav-label font-serif font-bold text-2xl tracking-tight text-black dark:text-white">Muhfil</span>
@@ -45,7 +45,7 @@
         </div>
 
         <nav class="space-y-1">
-          <a href="{% url 'feed' %}" class="medium-nav-item" data-nav-link="home">
+          <a href="{% url 'index' %}" class="medium-nav-item" data-nav-link="home">
             <i class="bi bi-house-door text-xl nav-icon-inactive"></i>
             <i class="bi bi-house-door-fill text-xl nav-icon-active hidden"></i>
             <span class="nav-label">Home</span>
@@ -123,7 +123,7 @@
       <header class="sticky top-0 z-30 w-full border-b border-gray-100 dark:border-[#242424] bg-white/95 dark:bg-[#121212]/95 backdrop-blur px-4 sm:px-8 py-3">
         <div class="flex items-center justify-between gap-4">
           <div class="flex items-center space-x-3 flex-1 max-w-md">
-            <a href="{% url 'feed' %}" class="lg:hidden shrink-0 flex items-center pr-1 group" title="Muhfil">
+            <a href="{% url 'index' %}" class="lg:hidden shrink-0 flex items-center pr-1 group" title="Muhfil">
               <img src="{% static 'images/muhfil-emblem-black.png' %}" alt="Muhfil" class="h-7 w-7 object-contain dark:hidden transition-transform group-hover:scale-105">
               <img src="{% static 'images/muhfil-emblem-white.png' %}" alt="Muhfil" class="h-7 w-7 object-contain hidden dark:block transition-transform group-hover:scale-105">
             </a>

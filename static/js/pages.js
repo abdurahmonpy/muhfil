@@ -393,7 +393,7 @@
       .then(function(data) {
         if (data.success) {
           if (typeof showToast === 'function') showToast('Muvaffaqiyatli ro\'yxatdan o\'tdingiz!');
-          window.location.href = data.redirect_url || '/feed/';
+          window.location.href = data.redirect_url || '/';
         } else {
           if (btn) btn.disabled = false;
           if (typeof showToast === 'function') showToast(data.error || 'Xatolik yuz berdi');
@@ -430,7 +430,7 @@
       .then(function(data) {
         if (data.success) {
           if (typeof showToast === 'function') showToast('Muvaffaqiyatli tizimga kirdingiz!');
-          window.location.href = data.redirect_url || '/feed/';
+          window.location.href = data.redirect_url || '/';
         } else {
           if (btn) btn.disabled = false;
           if (typeof showToast === 'function') showToast(data.error || 'Xatolik yuz berdi');

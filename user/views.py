@@ -21,7 +21,7 @@ from conf.security import auth_rate_limiter, timing_safe_fake_check, sanitize_pl
 
 def register_view(request):
     if request.user.is_authenticated:
-        return redirect('feed')
+        return redirect('index')
 
     if request.method == 'POST':
         if request.content_type == 'application/json':
@@ -107,15 +107,15 @@ def register_view(request):
             request.session.set_expiry(0)
 
         if request.content_type == 'application/json':
-            return JsonResponse({'success': True, 'redirect_url': '/feed/'})
-        return redirect('feed')
+            return JsonResponse({'success': True, 'redirect_url': '/'})
+        return redirect('index')
 
     return render(request, 'register.html')
 
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('feed')
+        return redirect('index')
 
     if request.method == 'POST':
         if request.content_type == 'application/json':
@@ -169,8 +169,8 @@ def login_view(request):
                 request.session.set_expiry(0)
 
             if request.content_type == 'application/json':
-                return JsonResponse({'success': True, 'redirect_url': '/feed/'})
-            return redirect('feed')
+                return JsonResponse({'success': True, 'redirect_url': '/'})
+            return redirect('index')
         else:
             auth_rate_limiter.record_failure(request, identifier)
             msg = 'Noto\'g\'ri email/foydalanuvchi nomi yoki parol.'
@@ -381,7 +381,7 @@ def save_google_avatar(user, picture_url):
 
 def google_auth_view(request):
     if request.user.is_authenticated:
-        return redirect('feed')
+        return redirect('index')
 
     # Agar foydalanuvchi to'g'ridan-to'g'ri rasmiy Google oynasiga yo'naltirilishi so'ralsa
     if request.method == 'GET' and (request.GET.get('redirect') == '1' or request.GET.get('action') == 'oauth'):
@@ -493,8 +493,8 @@ def google_auth_view(request):
         auth_login(request, user)
 
         if request.content_type == 'application/json':
-            return JsonResponse({'success': True, 'redirect_url': '/feed/'})
-        return redirect('feed')
+            return JsonResponse({'success': True, 'redirect_url': '/'})
+        return redirect('index')
 
     # GET so'rovda to'g'ridan-to'g'ri rasmiy Google OAuth sahifasiga yo'naltiriladi
     if not getattr(settings, 'GOOGLE_CLIENT_ID', None):
@@ -521,7 +521,7 @@ def google_auth_view(request):
 def google_auth_callback_view(request):
     """Google OAuth 2.0 orqali qaytganda kodni almashtirib foydalanuvchini tizimga kiritish."""
     if request.user.is_authenticated:
-        return redirect('feed')
+        return redirect('index')
 
     error = request.GET.get('error')
     if error:
@@ -618,7 +618,7 @@ def google_auth_callback_view(request):
 
         auth_rate_limiter.reset_attempts(request, email)
         auth_login(request, user)
-        return redirect('feed')
+        return redirect('index')
 
     except Exception as e:
         return redirect(f'/login/?error={urllib.parse.quote("Google orqali kirishda xatolik yuz berdi: " + str(e))}')

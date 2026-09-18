@@ -1,10 +1,10 @@
-﻿{% load static %}
+{% load static %}
 <!-- Floating Liquid Glass Mobile Navigation Bar (Telegram / iOS Style) -->
 <nav id="mobile-liquid-dock" class="lg:hidden fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1.5rem)] max-w-[420px] select-none" aria-label="Mobile Navigation">
   <div class="liquid-glass-dock flex items-center justify-around px-2 py-1.5 sm:px-3 sm:py-2">
     
     <!-- 1. Home -->
-    <a href="{% url 'feed' %}" class="liquid-dock-item" data-nav-link="home">
+    <a href="{% url 'index' %}" class="liquid-dock-item" data-nav-link="home">
       <div class="dock-icon-wrapper relative flex items-center justify-center">
         <i class="bi bi-house-door text-xl nav-icon-inactive"></i>
         <i class="bi bi-house-door-fill text-xl nav-icon-active hidden"></i>

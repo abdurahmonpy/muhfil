@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    index, feed, lists, notifications, profile, search,
+    index, feed, feed_redirect, lists, notifications, profile, search,
     settings, stats, story, story_detail, write, about,
     create_post_api, delete_post_api, toggle_clap_api, add_comment_api,
     toggle_bookmark_api, create_list_api, add_to_list_api,
@@ -9,7 +9,8 @@ from .views import (
 
 urlpatterns = [
     path('', index, name="index"),
-    path('feed/', feed, name="feed"),
+    path('', index, name="feed"),
+    path('feed/', feed_redirect, name="feed_redirect"),
     path('lists/', lists, name="lists"),
     path('notifications/', notifications, name="notifications"),
     path('profile/', profile, name="profile"),
