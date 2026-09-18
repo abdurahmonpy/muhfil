@@ -131,6 +131,8 @@ else:
 
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
+MEDIA_URL = '/media/'
+
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     DATABASES['default'] = dj_database_url.config(
@@ -177,11 +179,19 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 # ==============================================================================
 # EMAIL CONFIGURATION (SMTP & Verification Codes)
 # ==============================================================================
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '').strip()
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '').strip().replace(' ', '')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com').strip()
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
+EMAIL_TIMEOUT = 5  # Maksimal 5 soniya SMTP timeout, server qotib qolmasligi uchun
+
+if EMAIL_PORT == 465:
+    EMAIL_USE_SSL = True
+    EMAIL_USE_TLS = False
+else:
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
+    EMAIL_USE_SSL = False
+
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', f"Muhfil <{EMAIL_HOST_USER or 'noreply@muhfil.uz'}>")
 
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:

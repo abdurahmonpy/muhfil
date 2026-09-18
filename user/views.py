@@ -1,6 +1,8 @@
+import os
 import json
 import re
 import random
+import threading
 import urllib.request
 import urllib.parse
 from django.conf import settings
@@ -95,6 +97,85 @@ def send_otp_api(request):
     """
     plain_message = f"Muhfil platformasida ro'yxatdan o'tish uchun bir martalik tasdiqlash kodingiz: {otp_code}\nUshbu kod 10 daqiqa davomida amal qiladi."
 
+    # Foydalanuvchi interfeysi kutib qolmasligi (0.01 soniyada javob qaytarish) uchun
+    # va Railway network/SMTP bloklanishlarida xatolik bermasligi uchun asinxron daemon oqimda yuboriladi
+    threading.Thread(
+        target=_dispatch_otp_email_worker,
+        args=(email, otp_code, subject, html_message, plain_message),
+        daemon=True
+    ).start()
+
+    return JsonResponse({
+        'success': True,
+        'message': f"Tasdiqlash kodi {email} manziliga yuborildi.",
+        'cooldown': 60
+    })
+
+
+def _dispatch_otp_email_worker(email, otp_code, subject, html_message, plain_message):
+    """
+    Email yuborish worker:
+    1. Resend HTTPS API (Port 443 - Railway hech qachon bloklamaydi, 100% ishonchli)
+    2. Brevo HTTPS API (Port 443)
+    3. Standart Django SMTP
+    """
+    resend_api_key = os.environ.get('RESEND_API_KEY', '').strip()
+    brevo_api_key = os.environ.get('BREVO_API_KEY', '').strip()
+
+    # 1. Resend HTTPS API
+    if resend_api_key:
+        try:
+            from_sender = os.environ.get('RESEND_FROM_EMAIL', 'Muhfil <onboarding@resend.dev>')
+            payload = json.dumps({
+                "from": from_sender,
+                "to": [email],
+                "subject": subject,
+                "html": html_message
+            }).encode('utf-8')
+            req = urllib.request.Request(
+                'https://api.resend.com/emails',
+                data=payload,
+                headers={
+                    'Authorization': f"Bearer {resend_api_key}",
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Muhfil/1.0'
+                },
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                if resp.status in (200, 201):
+                    print(f"[OTP EMAIL RESEND API SUCCESS] Kod: {otp_code} -> {email}")
+                    return
+        except Exception as e:
+            print(f"[OTP EMAIL RESEND API ERROR] {e}")
+
+    # 2. Brevo HTTPS API
+    if brevo_api_key:
+        try:
+            from_sender_email = os.environ.get('BREVO_FROM_EMAIL', getattr(settings, 'EMAIL_HOST_USER', '') or 'noreply@muhfil.uz')
+            payload = json.dumps({
+                "sender": {"name": "Muhfil", "email": from_sender_email},
+                "to": [{"email": email}],
+                "subject": subject,
+                "htmlContent": html_message
+            }).encode('utf-8')
+            req = urllib.request.Request(
+                'https://api.brevo.com/v3/smtp/email',
+                data=payload,
+                headers={
+                    'api-key': brevo_api_key,
+                    'Content-Type': 'application/json'
+                },
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                if resp.status in (200, 201):
+                    print(f"[OTP EMAIL BREVO API SUCCESS] Kod: {otp_code} -> {email}")
+                    return
+        except Exception as e:
+            print(f"[OTP EMAIL BREVO API ERROR] {e}")
+
+    # 3. Standart Django SMTP
     try:
         send_mail(
             subject=subject,
@@ -104,14 +185,9 @@ def send_otp_api(request):
             html_message=html_message,
             fail_silently=False
         )
+        print(f"[OTP EMAIL SMTP SUCCESS] Kod: {otp_code} -> {email}")
     except Exception as e:
-        print(f"[OTP EMAIL DISPATCH] Kod: {otp_code} email: {email} (SMTP xatolik: {e})")
-
-    return JsonResponse({
-        'success': True,
-        'message': f"Tasdiqlash kodi {email} manziliga yuborildi.",
-        'cooldown': 60
-    })
+        print(f"[OTP EMAIL DISPATCH NOTICE] Kod: {otp_code} email: {email} (SMTP xatolik: {e})")
 
 
 @require_POST

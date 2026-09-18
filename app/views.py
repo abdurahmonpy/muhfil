@@ -220,10 +220,17 @@ def create_post_api(request):
         post_id = request.POST.get('post_id')
 
     if not title:
-        return JsonResponse({'success': False, 'error': 'Story title is required'}, status=400)
+        if status == 'draft':
+            title = 'Untitled story'
+        else:
+            return JsonResponse({'success': False, 'error': 'Story title is required'}, status=400)
 
     if not text and not plain_text:
-        return JsonResponse({'success': False, 'error': 'Story content cannot be empty'}, status=400)
+        if status == 'draft':
+            text = '<p></p>'
+            plain_text = ''
+        else:
+            return JsonResponse({'success': False, 'error': 'Story content cannot be empty'}, status=400)
 
     # Sanitize inputs against Stored XSS attacks
     clean_title = sanitize_plain_text(title)
