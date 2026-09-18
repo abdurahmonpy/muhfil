@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPasswordChange();   // ← Password change AJAX handler
   initScrollReveal();     // ← Staggered smooth entrance for story cards
   initStoryReadingProgress(); // ← Reading progress indicator at viewport top
+  initLiquidDockEffects(); // ← Touch & tap liquid micro-interactions for mobile dock
 });
 
 /* ==========================================================================
@@ -2029,4 +2030,45 @@ function initStoryReadingProgress() {
 
   window.addEventListener('scroll', updateProgress, { passive: true });
   updateProgress();
+}
+
+/* ==========================================================================
+   25. Telegram Liquid Glass Mobile Dock Micro-interactions
+   ========================================================================== */
+function initLiquidDockEffects() {
+  const dock = document.getElementById('mobile-liquid-dock');
+  if (!dock) return;
+
+  dock.querySelectorAll('.liquid-dock-item').forEach(item => {
+    // Touch feedback for iOS/Android
+    item.addEventListener('touchstart', function() {
+      item.classList.add('dock-pressed');
+    }, { passive: true });
+
+    item.addEventListener('touchend', function() {
+      setTimeout(() => item.classList.remove('dock-pressed'), 120);
+    }, { passive: true });
+
+    item.addEventListener('touchcancel', function() {
+      item.classList.remove('dock-pressed');
+    }, { passive: true });
+
+    // Ripple click feedback
+    item.addEventListener('click', function(e) {
+      const rect = item.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'dock-ripple';
+      const size = Math.max(rect.width, rect.height) * 1.2;
+      ripple.style.width = ripple.style.height = `${size}px`;
+      
+      const clientX = e.clientX || (rect.left + rect.width / 2);
+      const clientY = e.clientY || (rect.top + rect.height / 2);
+      
+      ripple.style.left = `${clientX - rect.left - size / 2}px`;
+      ripple.style.top = `${clientY - rect.top - size / 2}px`;
+      
+      item.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 420);
+    });
+  });
 }
